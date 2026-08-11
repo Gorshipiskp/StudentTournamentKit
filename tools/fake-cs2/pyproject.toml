@@ -1,0 +1,24 @@
+[project]
+name = "stp-fake-cs2"
+version = "0.1.0"
+description = "Fake CS2 game server for STP Game Slice (webhooks + commands)"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fake-cs2 = "fake_cs2.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fake_cs2*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

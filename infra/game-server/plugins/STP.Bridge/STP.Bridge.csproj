@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- TECH-STACK: .NET 8. CSS runtime on VPS may be .NET 8 or newer (CSS moved toward .NET 10 LTS in 2026);
+         verify against the CounterStrikeSharp build installed on the game server. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>STP.Bridge</RootNamespace>
+    <AssemblyName>STP.Bridge</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <!-- Allow loading on newer CSS-hosted runtimes when present -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Official NuGet API package: https://www.nuget.org/packages/CounterStrikeSharp.API
+         Install/restore on a machine with SDK: dotnet restore && dotnet build -->
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.340" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

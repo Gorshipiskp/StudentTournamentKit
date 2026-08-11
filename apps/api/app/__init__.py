@@ -1,0 +1,1 @@
+"""STP platform API package."""

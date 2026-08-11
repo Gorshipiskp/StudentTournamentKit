@@ -1,0 +1,12 @@
+{
+  "PlatformUrl": "http://127.0.0.1:8000",
+  "WebhookSecret": "dev_webhook_secret_change_me",
+  "MatchId": "m_dev",
+  "ServerId": "srv_dev",
+  "ProtocolVersion": "1",
+  "BridgeVersion": "0.1.0",
+  "HeartbeatIntervalSeconds": 15,
+  "CommandListenHost": "0.0.0.0",
+  "CommandListenPort": 27099,
+  "EventsPath": "/api/v1/internal/cs2/events"
+}
