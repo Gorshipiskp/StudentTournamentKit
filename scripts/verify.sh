@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "== STP verify (Game Slice GATE) =="
+echo "== STK verify (Game Slice GATE) =="
 echo "root: $ROOT"
 
 if [[ ! -f .env ]]; then
@@ -22,7 +22,7 @@ echo "[1/4] artifacts"
 for f in \
   infra/game-server/CONTRACT.md \
   tools/fake-cs2/fake_cs2/cli.py \
-  infra/game-server/plugins/STP.Bridge/STP.Bridge.csproj \
+  infra/game-server/plugins/STK.Bridge/STK.Bridge.csproj \
   scripts/deploy-cs2.sh \
   infra/game-server/README.md
 do
@@ -44,9 +44,9 @@ if [[ ! -d .venv ]]; then
 fi
 export MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 export MYSQL_PORT="${MYSQL_PORT:-3307}"
-export MYSQL_USER="${MYSQL_USER:-stp}"
-export MYSQL_PASSWORD="${MYSQL_PASSWORD:-changeme_stp_dev}"
-export MYSQL_DATABASE="${MYSQL_DATABASE:-stp}"
+export MYSQL_USER="${MYSQL_USER:-stk}"
+export MYSQL_PASSWORD="${MYSQL_PASSWORD:-changeme_stk_dev}"
+export MYSQL_DATABASE="${MYSQL_DATABASE:-stk}"
 .venv/bin/python -m pytest -q
 cd "$ROOT"
 echo "OK pytest"

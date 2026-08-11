@@ -1,15 +1,15 @@
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>
 /// Periodic heartbeat event stub (CONTRACT type=heartbeat).
-/// Full timer wiring happens in StpBridgePlugin.OnAllPluginsLoaded.
+/// Full timer wiring happens in StkBridgePlugin.OnAllPluginsLoaded.
 /// </summary>
 public sealed class HeartbeatService
 {
     private readonly WebhookClient _webhooks;
-    private readonly StpBridgeConfig _config;
+    private readonly StkBridgeConfig _config;
 
-    public HeartbeatService(WebhookClient webhooks, StpBridgeConfig config)
+    public HeartbeatService(WebhookClient webhooks, StkBridgeConfig config)
     {
         _webhooks = webhooks;
         _config = config;

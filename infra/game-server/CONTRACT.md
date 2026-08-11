@@ -1,6 +1,6 @@
 # Контракт CS2 ↔ Platform
 
-> Канон для Fake (`tools/fake-cs2/`) и живого `STP.Bridge`.  
+> Канон для Fake (`tools/fake-cs2/`) и живого `STK.Bridge`.  
 > Согласовано с [INVARIANTS §6](../../docs/INVARIANTS.md), [ARCHITECTURE §11](../../docs/ARCHITECTURE.md).  
 > Domain **не** содержит типов MatchZy/RCON — только нормализованные события и whitelist-команды (A4, A7).
 
@@ -26,16 +26,16 @@ Events = быстрый путь. Snapshot = восстановление. Recon
 
 | Header | Значение |
 |--------|----------|
-| `X-STP-Signature` | `sha256=` + hex(`HMAC-SHA256(webhook_secret, raw_body)`) |
-| `X-STP-Event-Id` | тот же `event_id`, что в JSON (удобство логирования) |
+| `X-STK-Signature` | `sha256=` + hex(`HMAC-SHA256(webhook_secret, raw_body)`) |
+| `X-STK-Event-Id` | тот же `event_id`, что в JSON (удобство логирования) |
 | `Content-Type` | `application/json` |
-| `X-STP-Protocol-Version` | `1` (опционально, рекомендуется) |
+| `X-STK-Protocol-Version` | `1` (опционально, рекомендуется) |
 
 Пример:
 
 ```text
-X-STP-Signature: sha256=a1b2c3…
-X-STP-Event-Id: 550e8400-e29b-41d4-a716-446655440000
+X-STK-Signature: sha256=a1b2c3…
+X-STK-Event-Id: 550e8400-e29b-41d4-a716-446655440000
 ```
 
 Секрет — per `game_servers.webhook_secret` (или env Fake). Не логировать секрет.
@@ -218,6 +218,6 @@ HTTP 200 на доставку ≠ команда применена. Успех
 |----------|------|
 | Fake Game Server | `tools/fake-cs2/` |
 | Ingest (P2) | `POST /api/v1/internal/cs2/events` |
-| Bridge (P6) | `infra/game-server/plugins/STP.Bridge/` |
+| Bridge (P6) | `infra/game-server/plugins/STK.Bridge/` |
 | Инварианты | `docs/INVARIANTS.md` §6 |
 | Архитектура | `docs/ARCHITECTURE.md` §11, §15.3 |

@@ -1,10 +1,10 @@
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>
 /// Runtime config — mirrors Fake + CONTRACT (infra/game-server/CONTRACT.md).
 /// Loaded from config.json next to the plugin DLL (or CSS config hook later).
 /// </summary>
-public sealed class StpBridgeConfig
+public sealed class StkBridgeConfig
 {
     public string PlatformUrl { get; set; } = "http://127.0.0.1:8000";
     public string WebhookSecret { get; set; } = "change_me";

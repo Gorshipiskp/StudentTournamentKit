@@ -55,7 +55,7 @@ def finalize_match_demo(
         source_uri = str(src.resolve())
     else:
         dest.write_bytes(
-            b"STP_FAKE_DEMO\n"
+            b"STK_FAKE_DEMO\n"
             + f"match_id={match_id}\n".encode()
             + f"created={stamp}\n".encode()
         )

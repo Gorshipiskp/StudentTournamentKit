@@ -1,6 +1,6 @@
 # infra/game-server — операторский runbook (CS2 VPS)
 
-Контракт: [CONTRACT.md](./CONTRACT.md) · Bridge: [plugins/STP.Bridge/](./plugins/STP.Bridge/) · Fake (без VPS): `tools/fake-cs2/`.
+Контракт: [CONTRACT.md](./CONTRACT.md) · Bridge: [plugins/STK.Bridge/](./plugins/STK.Bridge/) · Fake (без VPS): `tools/fake-cs2/`.
 
 **live deploy:** только с доступом @owner (SSH). Локально всегда начинай с dry-run.
 
@@ -32,7 +32,7 @@ Windows-хелпер (только план): `.\scripts\deploy-cs2.ps1`
 | 2 | Metamod:Source | актуальный билд под CS2 |
 | 3 | CounterStrikeSharp | https://docs.cssharp.dev/ |
 | 4 | MatchZy | **не fork** (F1); https://github.com/shobhit-pathak/MatchZy |
-| 5 | STP.Bridge | `dotnet build` на машине с SDK → `addons/counterstrikesharp/plugins/STP.Bridge/` |
+| 5 | STK.Bridge | `dotnet build` на машине с SDK → `addons/counterstrikesharp/plugins/STK.Bridge/` |
 | 6 | `config.json` Bridge | PlatformUrl, WebhookSecret, MatchId, ServerId, CommandListenPort |
 | 7 | Firewall | 27015 game, 27020 GOTV; command port **только** с Platform |
 | 8 | Register | `POST /api/v1/game-servers` + `POST /api/v1/matches/{id}/assign-server` |
@@ -46,15 +46,15 @@ Windows-хелпер (только план): `.\scripts\deploy-cs2.ps1`
 ```bash
 export PLATFORM_URL=http://<platform-host>:8000
 export CS2_WEBHOOK_SECRET=...
-export STP_SERVER_ID=srv_1
+export STK_SERVER_ID=srv_1
 
 curl -sS -X POST "$PLATFORM_URL/api/v1/game-servers" \
   -H 'Content-Type: application/json' \
-  -d "{\"server_id\":\"$STP_SERVER_ID\",\"endpoint_url\":\"http://<cs2-ip>:27099\",\"webhook_secret\":\"$CS2_WEBHOOK_SECRET\",\"host\":\"<cs2-ip>\",\"port\":27015}"
+  -d "{\"server_id\":\"$STK_SERVER_ID\",\"endpoint_url\":\"http://<cs2-ip>:27099\",\"webhook_secret\":\"$CS2_WEBHOOK_SECRET\",\"host\":\"<cs2-ip>\",\"port\":27015}"
 
 curl -sS -X POST "$PLATFORM_URL/api/v1/matches/<match_id>/assign-server" \
   -H 'Content-Type: application/json' \
-  -d "{\"server_id\":\"$STP_SERVER_ID\"}"
+  -d "{\"server_id\":\"$STK_SERVER_ID\"}"
 ```
 
 ---

@@ -1,4 +1,4 @@
-# Student Tournament Platform — архитектура (обзор)
+# StudentTournamentKit — архитектура (обзор)
 
 > Полная спецификация: **[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** (v2.0).
 
@@ -21,7 +21,7 @@
 
 ```mermaid
 flowchart TB
-    CS2["VPS — CS2 + MatchZy + STP.Bridge"]
+    CS2["VPS — CS2 + MatchZy + STK.Bridge"]
     PLAT["VPS — Platform\nFastAPI · nginx · coturn"]
     MYSQL[(MySQL VPS)]
     DIR["Ноутбук режиссёра\nCS2 spec · OBS · Director Agent"]
@@ -91,7 +91,7 @@ Organization & Auth ──► Tournament Ops ──► Bracket ──► Match O
 ### Игра → Overlay
 
 ```text
-STP.Bridge → webhook → API → OverlayService → WebSocket → OBS Browser Source
+STK.Bridge → webhook → API → OverlayService → WebSocket → OBS Browser Source
 ```
 
 ### Режиссёр → OBS
@@ -111,7 +111,7 @@ Signaling: Commentator ↔ Platform WS ↔ Agent
 ### Судья
 
 ```text
-Judge UI → API → STP.Bridge → pause at next round buy → notify director + commentators
+Judge UI → API → STK.Bridge → pause at next round buy → notify director + commentators
 ```
 
 ---
@@ -134,7 +134,7 @@ Judge UI → API → STP.Bridge → pause at next round buy → notify director 
 | Frontend | Svelte 5 / SvelteKit + Tailwind |
 | Director Agent | Go 1.22 + Pion WebRTC + obs-websocket v5 |
 | БД | MySQL 8 |
-| CS2 | MatchZy + CounterStrikeSharp + STP.Bridge |
+| CS2 | MatchZy + CounterStrikeSharp + STK.Bridge |
 | Видео | WebRTC + coturn |
 | Delay Twitch | **OBS Stream Delay** (v1); FFmpeg в Agent — fallback v2 |
 

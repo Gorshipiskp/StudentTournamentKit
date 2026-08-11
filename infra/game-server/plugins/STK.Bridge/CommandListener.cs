@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>
 /// HTTP command listener stub — CONTRACT §4 (POST /v1/commands).
@@ -20,14 +20,14 @@ public sealed class CommandListener : IAsyncDisposable
         "GetSnapshot",
     };
 
-    private readonly StpBridgeConfig _config;
+    private readonly StkBridgeConfig _config;
     private readonly SequenceCounter _sequence;
     private readonly Dictionary<string, JsonElement> _acks = new();
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private Task? _loop;
 
-    public CommandListener(StpBridgeConfig config, SequenceCounter sequence)
+    public CommandListener(StkBridgeConfig config, SequenceCounter sequence)
     {
         _config = config;
         _sequence = sequence;
@@ -91,7 +91,7 @@ public sealed class CommandListener : IAsyncDisposable
                 await WriteJsonAsync(ctx.Response, 200, new
                 {
                     status = "ok",
-                    role = "stp-bridge",
+                    role = "stk-bridge",
                     protocol_version = _config.ProtocolVersion,
                     bridge_version = _config.BridgeVersion,
                     match_id = _config.MatchId,

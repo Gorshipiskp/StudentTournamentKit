@@ -17,9 +17,9 @@ from app.main import app
 def _configure_host_mysql() -> None:
     os.environ.setdefault("MYSQL_HOST", "127.0.0.1")
     os.environ.setdefault("MYSQL_PORT", "3307")
-    os.environ.setdefault("MYSQL_USER", "stp")
-    os.environ.setdefault("MYSQL_PASSWORD", "changeme_stp_dev")
-    os.environ.setdefault("MYSQL_DATABASE", "stp")
+    os.environ.setdefault("MYSQL_USER", "stk")
+    os.environ.setdefault("MYSQL_PASSWORD", "changeme_stk_dev")
+    os.environ.setdefault("MYSQL_DATABASE", "stk")
     reset_engine_cache()
     reset_session_factory_cache()
 

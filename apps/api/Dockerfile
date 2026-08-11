@@ -1,4 +1,4 @@
-# Student Tournament Platform — API image (Python 3.12)
+# StudentTournamentKit — API image (Python 3.12)
 FROM python:3.12-slim
 
 WORKDIR /app

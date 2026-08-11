@@ -3,7 +3,7 @@
 > **Для кого:** все агенты. **Владелец процесса:** Team Lead.  
 > **Язык:** русский в workers/; код — по правилам репо.
 
-Проект **Student Tournament Platform (STP)** — уровень **M**. Видение: [docs/VISION.md](../docs/VISION.md).
+Проект **StudentTournamentKit (STK)** — уровень **M**. Видение: [docs/VISION.md](../docs/VISION.md).
 
 ---
 

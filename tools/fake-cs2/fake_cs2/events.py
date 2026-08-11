@@ -81,9 +81,9 @@ class EventEmitter:
 
         headers = {
             "Content-Type": "application/json",
-            "X-STP-Signature": sign_body(self.config.webhook_secret, raw),
-            "X-STP-Event-Id": event["event_id"],
-            "X-STP-Protocol-Version": PROTOCOL_VERSION,
+            "X-STK-Signature": sign_body(self.config.webhook_secret, raw),
+            "X-STK-Event-Id": event["event_id"],
+            "X-STK-Protocol-Version": PROTOCOL_VERSION,
         }
         req = urllib.request.Request(
             self.config.events_url,

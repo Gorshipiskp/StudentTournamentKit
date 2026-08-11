@@ -7,4 +7,4 @@
 **Эскалация:** владелец — сроки, приоритеты; documentarian — merge overview.  
 **Антипаттерны:** 8 параллельных developer на одно ТЗ; читать журнал CURRENT целиком.
 
-**Контекст проекта:** Student Tournament Platform — дистанционные CS2-турниры. См. [docs/VISION.md](../../docs/VISION.md).
+**Контекст проекта:** StudentTournamentKit — дистанционные CS2-турниры. См. [docs/VISION.md](../../docs/VISION.md).

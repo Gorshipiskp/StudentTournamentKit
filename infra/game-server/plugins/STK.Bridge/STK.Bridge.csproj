@@ -5,8 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>STP.Bridge</RootNamespace>
-    <AssemblyName>STP.Bridge</AssemblyName>
+    <RootNamespace>STK.Bridge</RootNamespace>
+    <AssemblyName>STK.Bridge</AssemblyName>
     <LangVersion>latest</LangVersion>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <!-- Allow loading on newer CSS-hosted runtimes when present -->

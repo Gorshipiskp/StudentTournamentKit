@@ -1,4 +1,4 @@
-# Student Tournament Platform — Roadmap
+# StudentTournamentKit — Roadmap
 
 > Вертикальные срезы · не MVP-заглушки.  
 > Обновлено: 2026-08-11.
@@ -17,7 +17,7 @@
 | **5** | Broadcast Slice | Delayed Twitch, polish | OBS Stream Delay; semi-pro scenes; status dashboard |
 | **6** | Tournament Alpha | Первый реальный турнир (внутренний) | Полный дистанционный турнир end-to-end |
 | **7** | Production Ready | Стабильность, runbooks, docs | Повторный турнир за часы; documented failure recovery |
-| **8** | BestTvGU API | Публичный read API | Документированный API для виджетов (без UI в STP) |
+| **8** | BestTvGU API | Публичный read API | Документированный API для виджетов (без UI в STK) |
 
 ---
 
@@ -36,13 +36,13 @@
 
 ## Этап 1 — Game Slice
 
-**Фокус:** CS2 contract, Fake Game Server, Match/Judge API, STP.Bridge skeleton, deploy-cs2.
+**Фокус:** CS2 contract, Fake Game Server, Match/Judge API, STK.Bridge skeleton, deploy-cs2.
 
 | Deliverable | Описание |
 |-------------|----------|
 | Contract + Fake CS2 | Webhooks/commands/snapshot без живого VPS |
 | `apps/api/` adapter | Ingest, FSM, judge, commands, reconcile |
-| `STP.Bridge` | Skeleton CounterStrikeSharp |
+| `STK.Bridge` | Skeleton CounterStrikeSharp |
 | `scripts/deploy-cs2.sh` | Install path для VPS |
 | Demo durable stub | Не только ephemeral disk |
 
@@ -55,7 +55,7 @@
 - [x] Ingest → Match FSM + commands + judge review (Fake)
 - [x] Registry + snapshot reconcile
 - [x] Failure A–E (`apps/api/tests/test_failures_a_e.py`; B = skip → Production)
-- [x] STP.Bridge skeleton (build blocked без `dotnet` — documented)
+- [x] STK.Bridge skeleton (build blocked без `dotnet` — documented)
 - [x] `deploy-cs2` + demo durable stub
 - [x] `scripts/verify.ps1` зелёный
 - [ ] Live smoke — **blocked** (нет VPS / `@owner` SSH)
@@ -144,7 +144,7 @@
 
 ---
 
-## Этап 8 — BestTvGU API (когда STP стабилен)
+## Этап 8 — BestTvGU API (когда StudentTournamentKit стабилен)
 
 - Public read API documented
 - API keys per organizer

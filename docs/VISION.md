@@ -1,4 +1,4 @@
-# Student Tournament Platform — согласованное видение
+# StudentTournamentKit — согласованное видение
 
 > Полный лог калибровки с владельцем · 2026-08-11.  
 > Источник правды для product и architecture. Обновлять при изменении решений владельца.
@@ -9,7 +9,7 @@
 
 | Поле | Значение |
 |------|----------|
-| **Название** | Student Tournament Platform (STP) |
+| **Название** | StudentTournamentKit (STK) |
 | **Репозиторий** | BestCSTournaments |
 | **Позиционирование** | Нейтральная платформа турниров и стримов; **не** привязана к университету / BestTvGU |
 | **Watermark** | Обязательный, едва заметный, угол overlay |
@@ -121,7 +121,7 @@ MySQL (постоянный VPS организатора) ← все инста�
 
 | Компонент | Где | Жизненный цикл |
 |-----------|-----|----------------|
-| Платформа STP | VPS | Временный на турнир |
+| Платформа STK | VPS | Временный на турнир |
 | MySQL | VPS организатора | Постоянный |
 | CS2 | VPS | Временный на турнир |
 | Director Agent | Ноутбук Windows | На каждый эфир |
@@ -164,7 +164,7 @@ MySQL (постоянный VPS организатора) ← все инста�
 ## 8. BestTvGU
 
 - **Не в scope** текущей разработки
-- После STP: публичный **API** для виджетов
+- После StudentTournamentKit: публичный **API** для виджетов
 - UI виджетов — задача команды BestTvGU (владелец передаёт заявку)
 
 ---
@@ -206,7 +206,7 @@ MySQL (постоянный VPS организатора) ← все инста�
 | Frontend | Svelte 5 + SvelteKit + Tailwind CSS |
 | Director Agent | Go 1.22 + Pion WebRTC + obs-websocket v5 |
 | БД | MySQL 8 (BLOB медиа) |
-| CS2 | SteamCMD, Metamod, CounterStrikeSharp, MatchZy, **STP.Bridge** |
+| CS2 | SteamCMD, Metamod, CounterStrikeSharp, MatchZy, **STK.Bridge** |
 | Комментаторы | WebRTC в браузере + coturn (TURN) |
 | Delay Twitch | **OBS Stream Delay** (v1); FFmpeg в Agent — fallback v2 |
 | Deploy | Docker Compose (platform), bash + native (CS2) |

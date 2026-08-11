@@ -348,7 +348,7 @@ def cmd_post_probe(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="fake-cs2",
-        description="Fake CS2 game server for STP (events + commands + snapshot)",
+        description="Fake CS2 game server for STK (events + commands + snapshot)",
     )
     p.add_argument("--version", action="version", version=f"fake-cs2 {__version__}")
     p.add_argument("-v", "--verbose", action="store_true")

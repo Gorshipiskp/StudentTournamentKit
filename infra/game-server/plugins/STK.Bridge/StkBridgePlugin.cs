@@ -1,22 +1,22 @@
 using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>
-/// STP.Bridge — thin CounterStrikeSharp layer over MatchZy (ADR-023 / F1).
+/// STK.Bridge — thin CounterStrikeSharp layer over MatchZy (ADR-023 / F1).
 /// Skeleton: config, webhook client, sequence, heartbeat + command listener stubs.
 /// Do NOT invent MatchZy hook signatures here — wire after recon on VPS.
 /// </summary>
-public sealed class StpBridgePlugin : BasePlugin
+public sealed class StkBridgePlugin : BasePlugin
 {
-    public override string ModuleName => "STP.Bridge";
+    public override string ModuleName => "STK.Bridge";
     public override string ModuleVersion => "0.1.0";
-    public override string ModuleAuthor => "BestCSTournaments";
+    public override string ModuleAuthor => "StudentTournamentKit";
     public override string ModuleDescription =>
         "Platform bridge: normalized webhooks, commands, heartbeat (CONTRACT protocol_version=1)";
 
-    private StpBridgeConfig _config = new();
+    private StkBridgeConfig _config = new();
     private SequenceCounter _sequence = new();
     private WebhookClient? _webhooks;
     private HeartbeatService? _heartbeat;
@@ -32,7 +32,7 @@ public sealed class StpBridgePlugin : BasePlugin
         _commands = new CommandListener(_config, _sequence);
 
         Logger.LogInformation(
-            "STP.Bridge loading match_id={MatchId} server_id={ServerId} platform={Platform} protocol={Protocol}",
+            "STK.Bridge loading match_id={MatchId} server_id={ServerId} platform={Platform} protocol={Protocol}",
             _config.MatchId,
             _config.ServerId,
             _config.PlatformUrl,
@@ -67,7 +67,7 @@ public sealed class StpBridgePlugin : BasePlugin
             _commands.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
 
-        Logger.LogInformation("STP.Bridge unloaded");
+        Logger.LogInformation("STK.Bridge unloaded");
     }
 
     private async Task RunHeartbeatLoopAsync(CancellationToken ct)
@@ -100,7 +100,7 @@ public sealed class StpBridgePlugin : BasePlugin
         }
     }
 
-    private StpBridgeConfig LoadConfig()
+    private StkBridgeConfig LoadConfig()
     {
         try
         {
@@ -108,17 +108,17 @@ public sealed class StpBridgePlugin : BasePlugin
             if (!File.Exists(path))
             {
                 Logger.LogWarning("config.json not found at {Path}; using defaults", path);
-                return new StpBridgeConfig();
+                return new StkBridgeConfig();
             }
 
             var json = File.ReadAllText(path);
-            var cfg = System.Text.Json.JsonSerializer.Deserialize<StpBridgeConfig>(json);
-            return cfg ?? new StpBridgeConfig();
+            var cfg = System.Text.Json.JsonSerializer.Deserialize<StkBridgeConfig>(json);
+            return cfg ?? new StkBridgeConfig();
         }
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Failed to load config.json; using defaults");
-            return new StpBridgeConfig();
+            return new StkBridgeConfig();
         }
     }
 }

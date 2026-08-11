@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from app.domain.shared.outbox import OutboxMessage
 from app.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
 
-logger = logging.getLogger("stp.outbox")
+logger = logging.getLogger("stk.outbox")
 
 
 def handle_outbox_message(message: OutboxMessage) -> None:

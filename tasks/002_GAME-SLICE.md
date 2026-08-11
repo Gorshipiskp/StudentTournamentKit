@@ -13,7 +13,7 @@
 
 ## 0. Цель (для людей)
 
-Сделать так, чтобы платформа **вела матч**: принимала события с игрового контура, держала статусы матча и судьи, отправляла паузу / продолжение / тех. поражение — сначала на **Fake Game Server** (без твоего VPS), параллельно подготовив **STP.Bridge** и скрипт деплоя CS2 для живой проверки, когда появится сервер.
+Сделать так, чтобы платформа **вела матч**: принимала события с игрового контура, держала статусы матча и судьи, отправляла паузу / продолжение / тех. поражение — сначала на **Fake Game Server** (без твоего VPS), параллельно подготовив **STK.Bridge** и скрипт деплоя CS2 для живой проверки, когда появится сервер.
 
 ---
 
@@ -30,7 +30,7 @@
 - Game server registry (CRUD stub) + assign server to match
 - Reconciliation stub: snapshot vs platform view
 - `event_outbox` на match transitions
-- `infra/game-server/plugins/STP.Bridge/` — скелет CounterStrikeSharp (C#): config, heartbeat, webhook client, command ack stubs
+- `infra/game-server/plugins/STK.Bridge/` — скелет CounterStrikeSharp (C#): config, heartbeat, webhook client, command ack stubs
 - `scripts/deploy-cs2.sh` (+ README): SteamCMD/MatchZy/Bridge install steps (исполнение на VPS — когда есть доступ)
 - Demo: metadata + **durable copy stub** (локальная папка / volume; не только «файл на ephemeral CS2»)
 - Автотесты failure A–E на Fake ([INVARIANTS §16](../docs/INVARIANTS.md))
@@ -49,7 +49,7 @@
 
 ## 2. Frozen (не менять без TL)
 
-- **F1:** MatchZy reuse + **STP.Bridge** thin layer; не fork MatchZy (ADR-010, ADR-023)
+- **F1:** MatchZy reuse + **STK.Bridge** thin layer; не fork MatchZy (ADR-010, ADR-023)
 - **F2:** Domain без MatchZy/RCON типов — только normalized events/commands (A4, A7)
 - **F3:** MatchStatus ≠ ReviewStatus; tech pause не MatchStatus (ADR-026)
 - **F4:** Commands idempotent: `command_id` + ack; HTTP 200 ≠ applied (ADR-029, A3, A5)
@@ -87,7 +87,7 @@
 | Ingest API | `presentation/http/routers/internal_cs2.py` |
 | Match / Judge | `domain/match/`, `application/commands/` |
 | Adapter | `infrastructure/adapters/cs2/` |
-| Bridge | `infra/game-server/plugins/STP.Bridge/` |
+| Bridge | `infra/game-server/plugins/STK.Bridge/` |
 | Deploy | `scripts/deploy-cs2.sh`, `infra/game-server/README.md` |
 | Demo durable stub | напр. `data/demos/` + `demo_files.durable_uri` |
 
@@ -113,7 +113,7 @@
 - [x] Duplicate `event_id` → no double apply
 - [x] Out-of-order / gap `sequence` → обнаружение + snapshot reconcile (не silent corrupt)
 - [x] Tests A–E (Fake): Platform restart simulation, Agent N/A or stub, duplicate webhook, OOO webhook, judge×round race
-- [x] STP.Bridge проект собирается (или чёткий blocker с причиной + stub compile path)
+- [x] STK.Bridge проект собирается (или чёткий blocker с причиной + stub compile path)
 - [x] `deploy-cs2.sh` + README существуют
 - [x] Demo durable stub: после «match complete» есть `durable_uri` / файл не только «на fake disk»
 - [x] `verify.ps1` включает новые тесты

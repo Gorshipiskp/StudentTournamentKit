@@ -9,7 +9,7 @@
 
 ## Цель
 
-Game Slice: контракт CS2 ↔ Platform, Fake Game Server, match/judge/commands, скелет STP.Bridge + deploy scripts — GATE по tasks/002_GAME-SLICE.md.
+Game Slice: контракт CS2 ↔ Platform, Fake Game Server, match/judge/commands, скелет STK.Bridge + deploy scripts — GATE по tasks/002_GAME-SLICE.md.
 
 ## Scope
 

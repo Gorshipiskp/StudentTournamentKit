@@ -1,4 +1,4 @@
-# Student Tournament Platform — обзор документации
+# StudentTournamentKit — обзор документации
 
 | Документ | Назначение |
 |----------|------------|

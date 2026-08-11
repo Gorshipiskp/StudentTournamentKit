@@ -39,7 +39,7 @@
 ```text
 2026-08-11 developer: TZ002 P8 GATE done — failure A–E; verify.ps1 [1–4]; live_smoke=blocked; primary GATE closed Fake
 2026-08-11 developer: TZ002 P7 done — deploy-cs2 dry-run + demo_files durable; next P8 GATE (новый чат)
-2026-08-11 developer: TZ002 P6 done — STP.Bridge skeleton; build blocked (no dotnet); next P7 deploy (новый чат)
+2026-08-11 developer: TZ002 P6 done — STK.Bridge skeleton; build blocked (no dotnet); next P7 deploy (новый чат)
 2026-08-11 developer: TZ002 P5 done — game_servers + assign + snapshot reconcile; next P6 Bridge (новый чат)
 2026-08-11 developer: TZ002 P4 done — judge review→pause→continue/forfeit; next P5 registry (новый чат)
 2026-08-11 developer: TZ002 P3 done — pause/resume/forfeit + command_id/ack; next P4 judge (новый чат)

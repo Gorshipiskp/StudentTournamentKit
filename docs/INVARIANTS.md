@@ -1,4 +1,4 @@
-# Student Tournament Platform — архитектурные инварианты и reconciliation
+# StudentTournamentKit — архитектурные инварианты и reconciliation
 
 > Версия 1.0 · 2026-08-11  
 > Источник: ревью системного дизайна · дополняет [ARCHITECTURE.md](ARCHITECTURE.md) · [DECISIONS.md](DECISIONS.md)
@@ -321,7 +321,7 @@ Audit: `request_id`, `correlation_id`, `actor_*`, `match_id`, `tournament_id`, `
 |-----------|------|
 | Platform | `api_version`, `protocol_version` |
 | Agent | `agent_version`, `protocol_version` → dashboard: compatible? |
-| STP.Bridge | `bridge_version`, `protocol_version` в heartbeat |
+| STK.Bridge | `bridge_version`, `protocol_version` в heartbeat |
 
 WS messages: `"protocol": 1`.
 

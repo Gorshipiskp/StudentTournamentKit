@@ -1,4 +1,4 @@
-# Student Tournament Platform — hub проекта
+# StudentTournamentKit — hub проекта
 
 > Платформа для дистанционных CS2-турниров с полупрофессиональной трансляцией.  
 > Репозиторий: `BestCSTournaments`.
@@ -19,8 +19,8 @@
 ## Профиль проекта
 
 ```yaml
-project_name: Student Tournament Platform
-short_name: STP
+project_name: StudentTournamentKit
+short_name: STK
 repo_slug: BestCSTournaments
 owner: "<уточнить>"
 primary_stack: "Python FastAPI + Svelte 5/SvelteKit + Go Director Agent + MySQL 8 + MatchZy/CSS"
@@ -51,7 +51,7 @@ verify_command: TBD (scripts/verify.ps1)
 | Компонент | Где |
 |-----------|-----|
 | MySQL | Постоянный VPS организатора |
-| Platform STP | Временный VPS на турнир |
+| Platform STK | Временный VPS на турнир |
 | CS2 server | Временный VPS на турнир |
 | OBS + CS2 + Director Agent | Ноутбук режиссёра |
 

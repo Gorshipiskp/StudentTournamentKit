@@ -1,4 +1,4 @@
-# Student Tournament Platform — рекомендованный технологический стек
+# StudentTournamentKit — рекомендованный технологический стек
 
 > Версия 1.0 · 2026-08-11 · статус: **recommended** (зафиксировано для разработки).  
 > Связано: [ARCHITECTURE.md](ARCHITECTURE.md) · [DECISIONS.md](DECISIONS.md) · [VISION.md](VISION.md) · [INVARIANTS.md](INVARIANTS.md).
@@ -38,7 +38,7 @@
 | Delayed Twitch | **OBS Stream Delay** (v1); FFmpeg в Agent — fallback v2 | v1 = OBS |
 | CS2 сервер | **SteamCMD + CS2 Dedicated Server** | Linux |
 | Мод-платформа | **Metamod:Source** | 1.12+ |
-| Плагины CS2 | **CounterStrikeSharp** + **MatchZy** + **STP.Bridge** (свой) | .NET 8 |
+| Плагины CS2 | **CounterStrikeSharp** + **MatchZy** + **STK.Bridge** (свой) | .NET 8 |
 | RCON | **aiorcon** (Python, async) | запасной канал команд |
 | Reverse proxy | **nginx** | TLS, static, WS upgrade |
 | Контейнеризация платформы | **Docker Compose** | api, nginx, coturn |
@@ -151,7 +151,7 @@ apps/api/
 | Windows service | `kardianos/service` | Тяжело | Отлично |
 | Portable exe | Да | Нет | Да |
 
-**Решение:** `apps/director-agent/` — **Go 1.22+**, собирается в `stp-director-agent.exe`.
+**Решение:** `apps/director-agent/` — **Go 1.22+**, собирается в `stk-director-agent.exe`.
 
 ### Функции агента
 
@@ -191,8 +191,8 @@ OBS Stream Output
 
 ### Установка
 
-- **Portable zip** + `stp-director-agent install` (Windows service, optional).
-- Конфиг: `%AppData%/STP/agent.yaml` — platform URL, tournament token, OBS host/port/password.
+- **Portable zip** + `stk-director-agent install` (Windows service, optional).
+- Конфиг: `%AppData%/STK/agent.yaml` — platform URL, tournament token, OBS host/port/password.
 - Мастер первого запуска: TUI или маленький Svelte page на `localhost:19876`.
 
 ---
@@ -250,7 +250,7 @@ SteamCMD
         └── Metamod:Source 1.12+
               └── CounterStrikeSharp (.NET 8 runtime)
                     ├── MatchZy          # матчи, ready, knife, pause, demos
-                    └── STP.Bridge       # наш плагин (см. ниже)
+                    └── STK.Bridge       # наш плагин (см. ниже)
 ```
 
 ### Почему native, не Docker
@@ -264,9 +264,9 @@ CS2 чувствителен к CPU latency и tick; Docker добавляет �
 - **Не переписываем** — оборачиваем API.
 - Конфигурация матча через MatchZy JSON / console + наш adapter синхронизирует с Platform DB.
 
-### STP.Bridge (свой CounterStrikeSharp плагин)
+### STK.Bridge (свой CounterStrikeSharp плагин)
 
-**Путь:** `infra/game-server/plugins/STP.Bridge/`
+**Путь:** `infra/game-server/plugins/STK.Bridge/`
 
 Задачи, которые MatchZy **не закрывает** или нужны кастомно:
 
@@ -284,7 +284,7 @@ CS2 чувствителен к CPU latency и tick; Docker добавляет �
 ### Связка Platform ↔ CS2
 
 ```text
-MatchZy / STP.Bridge (CSS)
+MatchZy / STK.Bridge (CSS)
     --HTTP webhook-->  Platform API  /api/internal/cs2/events
 Platform API
     --HTTP-->  CS2 VPS : matchzy load/ready (если exposed)
@@ -302,7 +302,7 @@ Director laptop (GOTV)
 ### Демо (GOTV)
 
 - MatchZy / CS2: `tv_autorecord 1`, путь `{match_id}/{map}_{timestamp}.dem`.
-- После `map_end`: STP.Bridge webhook → Platform сохраняет metadata; опционально `rsync`/`scp` script копирует на storage (v2).
+- После `map_end`: STK.Bridge webhook → Platform сохраняет metadata; опционально `rsync`/`scp` script копирует на storage (v2).
 
 ---
 
@@ -348,7 +348,7 @@ infra/platform/docker-compose.yml
 scripts/deploy-cs2.sh
   - install steamcmd, cs2
   - install metamod, counterstrikesharp
-  - install matchzy, stp-bridge
+  - install matchzy, stk-bridge
   - configure firewall (game port, GOTV port)
   - register server in platform
 ```
@@ -372,7 +372,7 @@ scripts/deploy-cs2.sh
 |---------|--------|
 | Organizer auth | JWT short-lived + refresh rotation |
 | Invite tokens | 32+ byte random, hashed in DB, scoped `role+match_id`, TTL |
-| Internal webhooks CS2 | HMAC signature `X-STP-Signature` + shared secret per server |
+| Internal webhooks CS2 | HMAC signature `X-STK-Signature` + shared secret per server |
 | RCON | Firewall: only Platform VPS IP |
 | Secrets | `config/secrets/` local, env on VPS, **не** в git/workers |
 | CORS | Same-origin через nginx; overlay token auth |
@@ -420,7 +420,7 @@ matchzy: "latest compatible with CSS"
 
 | Этап | Стек в фокусе |
 |------|----------------|
-| 1 Game Slice | FastAPI, MySQL, Alembic, SteamCMD, MatchZy, STP.Bridge, aiorcon |
+| 1 Game Slice | FastAPI, MySQL, Alembic, SteamCMD, MatchZy, STK.Bridge, aiorcon |
 | 2 Production Slice | Svelte overlay, SvelteKit dashboard, Go agent, obs-websocket, nginx |
 | 3 People Slice | WebRTC Pion + coturn, judge SvelteKit, signaling WS |
 | 4 Tournament Slice | SvelteKit admin wizard, JWT auth, invite tokens |

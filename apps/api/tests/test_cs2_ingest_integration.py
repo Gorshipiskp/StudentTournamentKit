@@ -18,9 +18,9 @@ from app.main import app
 def _configure_host_mysql() -> None:
     os.environ.setdefault("MYSQL_HOST", "127.0.0.1")
     os.environ.setdefault("MYSQL_PORT", "3307")
-    os.environ.setdefault("MYSQL_USER", "stp")
-    os.environ.setdefault("MYSQL_PASSWORD", "changeme_stp_dev")
-    os.environ.setdefault("MYSQL_DATABASE", "stp")
+    os.environ.setdefault("MYSQL_USER", "stk")
+    os.environ.setdefault("MYSQL_PASSWORD", "changeme_stk_dev")
+    os.environ.setdefault("MYSQL_DATABASE", "stk")
     reset_engine_cache()
     reset_session_factory_cache()
 
@@ -71,8 +71,8 @@ def test_ingest_score_visible_on_get_and_duplicate_noop(client: TestClient) -> N
     raw = json.dumps(event, separators=(",", ":")).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
-        "X-STP-Signature": sign_body(secret, raw),
-        "X-STP-Event-Id": event["event_id"],
+        "X-STK-Signature": sign_body(secret, raw),
+        "X-STK-Event-Id": event["event_id"],
     }
 
     r1 = client.post("/api/v1/internal/cs2/events", content=raw, headers=headers)
@@ -100,6 +100,6 @@ def test_ingest_score_visible_on_get_and_duplicate_noop(client: TestClient) -> N
     bad = client.post(
         "/api/v1/internal/cs2/events",
         content=raw,
-        headers={**headers, "X-STP-Signature": "sha256=deadbeef"},
+        headers={**headers, "X-STK-Signature": "sha256=deadbeef"},
     )
     assert bad.status_code == 401

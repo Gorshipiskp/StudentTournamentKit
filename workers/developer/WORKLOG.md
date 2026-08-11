@@ -23,7 +23,7 @@
 
 ## 2026-08-11 — TZ002 P6/8 done
 
-- `infra/game-server/plugins/STP.Bridge/`: csproj, config, webhook/HMAC, sequence, heartbeat, command listener stubs
+- `infra/game-server/plugins/STK.Bridge/`: csproj, config, webhook/HMAC, sequence, heartbeat, command listener stubs
 - README + recon links CSS/MatchZy; **BUILD BLOCKER**: нет `dotnet` в PATH → checklist для VPS
 - **Стоп:** P7 (deploy-cs2 + demo durable) — новый чат
 
@@ -31,7 +31,7 @@
 
 - `game_servers` registry + assign; GetSnapshot reconcile чинит score/pause/sequence
 - heartbeat → `last_heartbeat`; pytest 29 passed
-- **Стоп:** P6 (STP.Bridge C# skeleton) — новый чат
+- **Стоп:** P6 (STK.Bridge C# skeleton) — новый чат
 
 ## 2026-08-11 — TZ002 P4/8 done
 

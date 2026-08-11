@@ -1,4 +1,4 @@
-# STP.Bridge — CounterStrikeSharp plugin (skeleton)
+# STK.Bridge — CounterStrikeSharp plugin (skeleton)
 
 Тонкий слой между **MatchZy** и Platform: нормализованные webhooks, heartbeat, приём whitelist-команд.
 
@@ -12,8 +12,8 @@
 
 | Компонент | Файл | Назначение |
 |-----------|------|------------|
-| Plugin entry | `StpBridgePlugin.cs` | `BasePlugin` Load/Unload |
-| Config | `config.json`, `StpBridgeConfig.cs` | Platform URL, secret, match/server id, listen port |
+| Plugin entry | `StkBridgePlugin.cs` | `BasePlugin` Load/Unload |
+| Config | `config.json`, `StkBridgeConfig.cs` | Platform URL, secret, match/server id, listen port |
 | Webhook + HMAC | `WebhookClient.cs` | `POST …/api/v1/internal/cs2/events` |
 | Sequence | `SequenceCounter.cs` | монотонный `sequence` per match |
 | Heartbeat | `HeartbeatService.cs` | периодический `heartbeat` |
@@ -40,16 +40,16 @@
 ## Сборка и publish
 
 ```bash
-cd infra/game-server/plugins/STP.Bridge
+cd infra/game-server/plugins/STK.Bridge
 dotnet restore
 dotnet build -c Release
 
 # Артефакты → папка плагина на CS2DS:
-#   .../game/csgo/addons/counterstrikesharp/plugins/STP.Bridge/
-# Скопировать: STP.Bridge.dll, STP.Bridge.deps.json, STP.Bridge.pdb, config.json
+#   .../game/csgo/addons/counterstrikesharp/plugins/STK.Bridge/
+# Скопировать: STK.Bridge.dll, STK.Bridge.deps.json, STK.Bridge.pdb, config.json
 ```
 
-Имя папки плагина = имя DLL (`STP.Bridge`), как в [CSS Hello World](https://docs.cssharp.dev/docs/guides/hello-world-plugin.html).
+Имя папки плагина = имя DLL (`STK.Bridge`), как в [CSS Hello World](https://docs.cssharp.dev/docs/guides/hello-world-plugin.html).
 
 `config.json` — рядом с DLL; секреты только на VPS, не коммитить прод-значения.
 
@@ -66,9 +66,9 @@ Reason: .NET SDK (`dotnet`) не найден в PATH на рабочей ста
 
 1. Установить [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (или SDK, совместимый с CSS на сервере).
 2. `dotnet --version` → записать в WORKLOG.
-3. `cd infra/game-server/plugins/STP.Bridge && dotnet restore && dotnet build -c Release`.
+3. `cd infra/game-server/plugins/STK.Bridge && dotnet restore && dotnet build -c Release`.
 4. Если NuGet `CounterStrikeSharp.API` Version в csproj устарел — `dotnet add package CounterStrikeSharp.API` (актуальная версия с nuget.org).
-5. Скопировать output в `addons/counterstrikesharp/plugins/STP.Bridge/`.
+5. Скопировать output в `addons/counterstrikesharp/plugins/STK.Bridge/`.
 6. Открыть firewall / `netsh http add urlacl` при необходимости для `CommandListenPort`.
 7. Зарегистрировать сервер в Platform (`POST /api/v1/game-servers` + assign) с `endpoint_url=http://<cs2-host>:<CommandListenPort>`.
 
@@ -81,9 +81,9 @@ Reason: .NET SDK (`dotnet`) не найден в PATH на рабочей ста
 | Поле config | Контракт |
 |-------------|----------|
 | `PlatformUrl` + `EventsPath` | `POST /api/v1/internal/cs2/events` |
-| `WebhookSecret` | HMAC `X-STP-Signature` |
+| `WebhookSecret` | HMAC `X-STK-Signature` |
 | `MatchId` / `ServerId` | поля event/command |
-| `ProtocolVersion` | `X-STP-Protocol-Version` / heartbeat payload |
+| `ProtocolVersion` | `X-STK-Protocol-Version` / heartbeat payload |
 | `CommandListenPort` | HTTP commands как у Fake |
 
 ---

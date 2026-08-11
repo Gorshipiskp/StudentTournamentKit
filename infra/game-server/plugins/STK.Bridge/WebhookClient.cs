@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>
 /// POST normalized events to Platform with HMAC (CONTRACT §2–3).
@@ -17,11 +17,11 @@ public sealed class WebhookClient
         WriteIndented = false,
     };
 
-    private readonly StpBridgeConfig _config;
+    private readonly StkBridgeConfig _config;
     private readonly SequenceCounter _sequence;
     private readonly HttpClient _http;
 
-    public WebhookClient(StpBridgeConfig config, SequenceCounter sequence, HttpClient? http = null)
+    public WebhookClient(StkBridgeConfig config, SequenceCounter sequence, HttpClient? http = null)
     {
         _config = config;
         _sequence = sequence;
@@ -52,9 +52,9 @@ public sealed class WebhookClient
         using var req = new HttpRequestMessage(HttpMethod.Post, _config.EventsUrl);
         req.Content = new ByteArrayContent(raw);
         req.Content.Headers.TryAddWithoutValidation("Content-Type", "application/json");
-        req.Headers.TryAddWithoutValidation("X-STP-Signature", signature);
-        req.Headers.TryAddWithoutValidation("X-STP-Event-Id", evt["event_id"]!.ToString());
-        req.Headers.TryAddWithoutValidation("X-STP-Protocol-Version", _config.ProtocolVersion);
+        req.Headers.TryAddWithoutValidation("X-STK-Signature", signature);
+        req.Headers.TryAddWithoutValidation("X-STK-Event-Id", evt["event_id"]!.ToString());
+        req.Headers.TryAddWithoutValidation("X-STK-Protocol-Version", _config.ProtocolVersion);
 
         try
         {

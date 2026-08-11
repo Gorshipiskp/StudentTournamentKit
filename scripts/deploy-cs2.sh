@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy-cs2.sh — install path for CS2 dedicated + Metamod + CSS + MatchZy + STP.Bridge
+# deploy-cs2.sh — install path for CS2 dedicated + Metamod + CSS + MatchZy + STK.Bridge
 # Target: clean Ubuntu 22.04/24.04 VPS. Does NOT run without explicit confirmation.
 #
 # Usage:
@@ -8,18 +8,18 @@
 #
 # Env (optional):
 #   CS2_INSTALL_DIR=/opt/cs2
-#   STP_REPO_DIR=/opt/BestCSTournaments
+#   STK_REPO_DIR=/opt/BestCSTournaments
 #   PLATFORM_URL=https://platform.example
 #   CS2_WEBHOOK_SECRET=...
-#   STP_MATCH_ID=m_...
-#   STP_SERVER_ID=srv_...
+#   STK_MATCH_ID=m_...
+#   STK_SERVER_ID=srv_...
 
 set -euo pipefail
 
 DRY_RUN=1
 ASSUME_YES=0
 CS2_INSTALL_DIR="${CS2_INSTALL_DIR:-/opt/cs2}"
-STP_REPO_DIR="${STP_REPO_DIR:-}"
+STK_REPO_DIR="${STK_REPO_DIR:-}"
 STEAMCMD_DIR="${STEAMCMD_DIR:-/opt/steamcmd}"
 
 log() { printf '[deploy-cs2] %s\n' "$*"; }
@@ -61,7 +61,7 @@ log "  3) SteamCMD: app_update 730 validate (CS2 dedicated)"
 log "  4) Install Metamod:Source for CS2 (see alliedmods / CSS docs)"
 log "  5) Install CounterStrikeSharp into game/csgo/addons/counterstrikesharp"
 log "  6) Install MatchZy plugin (do NOT fork — ADR-010/023)"
-log "  7) Build/copy STP.Bridge → addons/counterstrikesharp/plugins/STP.Bridge/"
+log "  7) Build/copy STK.Bridge → addons/counterstrikesharp/plugins/STK.Bridge/"
 log "  8) Write Bridge config.json (PlatformUrl, WebhookSecret, MatchId, ServerId, CommandListenPort)"
 log "  9) Firewall: UDP/TCP 27015 (game), UDP 27020 (GOTV), outbound 443; open CommandListenPort to Platform only"
 log " 10) Register server on Platform: POST /api/v1/game-servers + assign-server"
@@ -79,12 +79,12 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   log "Metamod / CSS / MatchZy: follow current upstream docs (versions change — recon on VPS)."
   log "  CSS: https://docs.cssharp.dev/"
   log "  MatchZy: https://github.com/shobhit-pathak/MatchZy"
-  log "  Bridge: \$REPO/infra/game-server/plugins/STP.Bridge (dotnet build — see plugin README)"
+  log "  Bridge: \$REPO/infra/game-server/plugins/STK.Bridge (dotnet build — see plugin README)"
   log ""
   log "Register hint:"
   log "  curl -X POST \$PLATFORM_URL/api/v1/game-servers -H 'Content-Type: application/json' \\"
-  log "    -d '{\"server_id\":\"\$STP_SERVER_ID\",\"endpoint_url\":\"http://<cs2-public-ip>:27099\",\"webhook_secret\":\"\$CS2_WEBHOOK_SECRET\"}'"
-  log "  curl -X POST \$PLATFORM_URL/api/v1/matches/<match_id>/assign-server -d '{\"server_id\":\"\$STP_SERVER_ID\"}'"
+  log "    -d '{\"server_id\":\"\$STK_SERVER_ID\",\"endpoint_url\":\"http://<cs2-public-ip>:27099\",\"webhook_secret\":\"\$CS2_WEBHOOK_SECRET\"}'"
+  log "  curl -X POST \$PLATFORM_URL/api/v1/matches/<match_id>/assign-server -d '{\"server_id\":\"\$STK_SERVER_ID\"}'"
   log ""
   log "DRY-RUN complete — no packages installed. Re-run with --yes on the CS2 VPS as root when ready."
   exit 0

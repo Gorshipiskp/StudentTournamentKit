@@ -1,1 +1,1 @@
-"""STP platform API package."""
+"""STK platform API package."""

@@ -16,11 +16,11 @@ def build_database_url() -> str:
     if explicit:
         return explicit
 
-    user = os.getenv("MYSQL_USER", "stp")
-    password = os.getenv("MYSQL_PASSWORD", "changeme_stp_dev")
+    user = os.getenv("MYSQL_USER", "stk")
+    password = os.getenv("MYSQL_PASSWORD", "changeme_stk_dev")
     host = os.getenv("MYSQL_HOST", "127.0.0.1")
     port = os.getenv("MYSQL_PORT", "3306")
-    database = os.getenv("MYSQL_DATABASE", "stp")
+    database = os.getenv("MYSQL_DATABASE", "stk")
     return (
         f"mysql+pymysql://{quote_plus(user)}:{quote_plus(password)}"
         f"@{host}:{port}/{database}?charset=utf8mb4"

@@ -1,4 +1,4 @@
-# ИИ-команда Student Tournament Platform
+# ИИ-команда StudentTournamentKit
 
 > Инструкция для владельца: как запускать чаты агентов в Cursor.  
 > Рабочая память: [workers/](workers/README.md).
@@ -57,7 +57,7 @@
 ## Универсальный промпт нового чата
 
 ```text
-Проект: BestCSTournaments (Student Tournament Platform).
+Проект: BestCSTournaments (StudentTournamentKit).
 
 Твоя роль: <РОЛЬ>.
 Твоя папка: workers/<папка>/.

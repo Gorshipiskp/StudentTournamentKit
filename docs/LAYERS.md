@@ -1,4 +1,4 @@
-# Student Tournament Platform — домены и слои
+# StudentTournamentKit — домены и слои
 
 > Версия **1.1** · 2026-08-11  
 > Дополняет [ARCHITECTURE.md](ARCHITECTURE.md) · [TECH-STACK.md](TECH-STACK.md) · [INVARIANTS.md](INVARIANTS.md)
@@ -23,7 +23,7 @@
 
 ## 1. Зачем слои
 
-STP — **модульный монолит**: один deployable API + distributed execution (CS2, Agent). Слои отделяют:
+STK — **модульный монолит**: один deployable API + distributed execution (CS2, Agent). Слои отделяют:
 
 | Что | От чего |
 |-----|---------|
@@ -349,7 +349,7 @@ Agent **не содержит** tournament/bracket logic — только match-
 
 ```text
 ┌────────── Game Plane ──────────┐
-│  L1  STP.Bridge HTTP callbacks │  → Platform webhooks
+│  L1  STK.Bridge HTTP callbacks │  → Platform webhooks
 │  L2  Bridge orchestration      │  judge pause hook, heartbeat
 │  L3  MatchZy domain            │  match flow (reuse)
 │  L4  CS2 engine + CSS runtime  │
@@ -358,12 +358,12 @@ Agent **не содержит** tournament/bracket logic — только match-
 
 | Слой | Компонент | Не знает про |
 |------|-----------|--------------|
-| L1 | STP.Bridge HTTP client | MySQL, overlay HTML |
+| L1 | STK.Bridge HTTP client | MySQL, overlay HTML |
 | L2 | Bridge event hooks | Dashboard UI |
 | L3 | MatchZy | Platform tournament bracket |
 | L4 | CS2 dedicated server | Всё остальное |
 
-**STP.Bridge** — anti-corruption layer на стороне игры (зеркало D5 в API).
+**STK.Bridge** — anti-corruption layer на стороне игры (зеркало D5 в API).
 
 ---
 
@@ -385,7 +385,7 @@ Agent **не содержит** tournament/bracket logic — только match-
 
 | Домен | Артефакт | Слои |
 |-------|----------|------|
-| D5 | `infra/game-server/plugins/STP.Bridge/` | L1–L2 on CS2 |
+| D5 | `infra/game-server/plugins/STK.Bridge/` | L1–L2 on CS2 |
 | D6,D8 | `apps/director-agent/` | L1–L4 local |
 | D6 | OBS Studio | external |
 | D7 | OBS Browser Source | external renderer |

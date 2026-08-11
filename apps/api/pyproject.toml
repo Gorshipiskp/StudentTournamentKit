@@ -1,7 +1,7 @@
 [project]
-name = "stp-api"
+name = "stk-api"
 version = "0.1.0"
-description = "Student Tournament Platform — backend API"
+description = "StudentTournamentKit — backend API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

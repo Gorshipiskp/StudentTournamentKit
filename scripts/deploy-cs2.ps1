@@ -27,7 +27,7 @@ if (Get-Command bash -ErrorAction SilentlyContinue) {
 
   1) SteamCMD + CS2 DS (app 730) on Ubuntu VPS
   2) Metamod → CounterStrikeSharp → MatchZy (no fork)
-  3) Build/copy STP.Bridge to plugins/STP.Bridge
+  3) Build/copy STK.Bridge to plugins/STK.Bridge
   4) Firewall 27015/27020 + Bridge command port to Platform
   5) POST /api/v1/game-servers + assign-server
   6) After match: durable demo via Platform data/demos (ADR-034)
@@ -42,7 +42,7 @@ Full text: infra/game-server/README.md
 
   1) SteamCMD + CS2 DS (app 730) on Ubuntu VPS
   2) Metamod → CounterStrikeSharp → MatchZy (no fork)
-  3) Build/copy STP.Bridge to plugins/STP.Bridge
+  3) Build/copy STK.Bridge to plugins/STK.Bridge
   4) Firewall 27015/27020 + Bridge command port to Platform
   5) POST /api/v1/game-servers + assign-server
   6) After match: durable demo via Platform data/demos (ADR-034)

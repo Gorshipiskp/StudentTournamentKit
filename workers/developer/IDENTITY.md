@@ -9,4 +9,4 @@
 
 **Планируемые зоны кода:** `apps/api/`, `apps/overlay/`, `apps/dashboard/`, `apps/judge/`, `apps/director-agent/`, `infra/`.
 
-**Продукт:** Student Tournament Platform (STP), CS2-only. См. [docs/VISION.md](../../docs/VISION.md).
+**Продукт:** StudentTournamentKit (STK), CS2-only. См. [docs/VISION.md](../../docs/VISION.md).

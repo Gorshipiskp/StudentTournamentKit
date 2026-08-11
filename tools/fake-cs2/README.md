@@ -1,6 +1,6 @@
 # Fake CS2 — локальный игровой контур без VPS
 
-Имитатор CS2 + STP.Bridge для **Game Slice**: шлёт нормализованные события на Platform,
+Имитатор CS2 + STK.Bridge для **Game Slice**: шлёт нормализованные события на Platform,
 принимает команды `PauseMatch` / `ResumeMatch` / `ForfeitMatch` / `GetSnapshot` / `LoadMatch`,
 отдаёт snapshot и ack.
 
@@ -94,9 +94,9 @@ curl -Method POST http://127.0.0.1:27099/v1/commands `
 
 Исходящие события → `POST {platform}/api/v1/internal/cs2/events` с заголовками:
 
-- `X-STP-Signature: sha256=…`
-- `X-STP-Event-Id: …`
-- `X-STP-Protocol-Version: 1`
+- `X-STK-Signature: sha256=…`
+- `X-STK-Event-Id: …`
+- `X-STK-Protocol-Version: 1`
 
 ---
 

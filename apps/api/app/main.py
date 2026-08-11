@@ -1,4 +1,4 @@
-"""FastAPI entrypoint — Student Tournament Platform API."""
+"""FastAPI entrypoint — StudentTournamentKit API."""
 
 from __future__ import annotations
 
@@ -26,14 +26,14 @@ async def lifespan(_app: FastAPI):
     # Startup replay: unprocessed outbox → handlers (idempotent)
     try:
         count = dispatch_pending()
-        logging.getLogger("stp.outbox").info("startup_outbox_replay processed=%s", count)
+        logging.getLogger("stk.outbox").info("startup_outbox_replay processed=%s", count)
     except Exception:
         # /health must still work if DB is briefly unavailable; /ready reports DB
-        logging.getLogger("stp.outbox").exception("startup_outbox_replay_failed")
+        logging.getLogger("stk.outbox").exception("startup_outbox_replay_failed")
     yield
 
 
-app = FastAPI(title="STP API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="STK API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CorrelationIdMiddleware)
 app.include_router(health.router)
 app.include_router(ready.router)

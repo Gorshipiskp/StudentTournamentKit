@@ -8,7 +8,7 @@
 ## P1/5 (вставить в новый чат Developer)
 
 ```text
-Проект: BestCSTournaments (Student Tournament Platform).
+Проект: BestCSTournaments (StudentTournamentKit).
 
 Роль: Developer · workers/developer/.
 Онбординг: L1 — product § · code-map § · IDENTITY · WORKLOG 3 дня · LAYERS § · INVARIANTS §A.

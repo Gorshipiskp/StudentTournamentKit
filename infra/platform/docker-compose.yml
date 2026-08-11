@@ -3,7 +3,7 @@
 #   cp .env.example .env
 #   docker compose --env-file .env -f infra/platform/docker-compose.yml up -d --build
 
-name: stp-platform
+name: stk-platform
 
 services:
   mysql:
@@ -11,9 +11,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root_dev}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-stp}
-      MYSQL_USER: ${MYSQL_USER:-stp}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_stp_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stk}
+      MYSQL_USER: ${MYSQL_USER:-stk}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_stk_dev}
     ports:
       - "${MYSQL_PUBLISH_PORT:-3306}:3306"
     volumes:
@@ -45,9 +45,9 @@ services:
       # Always the compose service name inside the network (not host localhost)
       MYSQL_HOST: mysql
       MYSQL_PORT: "3306"
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-stp}
-      MYSQL_USER: ${MYSQL_USER:-stp}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_stp_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stk}
+      MYSQL_USER: ${MYSQL_USER:-stk}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_stk_dev}
     ports:
       - "${API_PUBLISH_PORT:-8000}:8000"
     depends_on:

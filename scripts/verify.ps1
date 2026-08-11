@@ -1,10 +1,10 @@
-# STP verify — Foundation + Game Slice (TZ002 GATE)
+# STK verify — Foundation + Game Slice (TZ002 GATE)
 $ErrorActionPreference = "Stop"
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $Root
 
-Write-Host "== STP verify (Game Slice GATE) ==" -ForegroundColor Cyan
+Write-Host "== STK verify (Game Slice GATE) ==" -ForegroundColor Cyan
 Write-Host ("root: {0}" -f $Root)
 
 $EnvFile = Join-Path $Root ".env"
@@ -24,8 +24,8 @@ Write-Host "[1/4] artifacts (contract, fake, bridge, deploy)" -ForegroundColor C
 $required = @(
   "infra/game-server/CONTRACT.md",
   "tools/fake-cs2/fake_cs2/cli.py",
-  "infra/game-server/plugins/STP.Bridge/STP.Bridge.csproj",
-  "infra/game-server/plugins/STP.Bridge/README.md",
+  "infra/game-server/plugins/STK.Bridge/STK.Bridge.csproj",
+  "infra/game-server/plugins/STK.Bridge/README.md",
   "scripts/deploy-cs2.sh",
   "infra/game-server/README.md"
 )
@@ -67,9 +67,9 @@ if (-not (Test-Path $venvPython)) {
 
 if (-not $env:MYSQL_HOST) { $env:MYSQL_HOST = "127.0.0.1" }
 if (-not $env:MYSQL_PORT) { $env:MYSQL_PORT = "3307" }
-if (-not $env:MYSQL_USER) { $env:MYSQL_USER = "stp" }
-if (-not $env:MYSQL_PASSWORD) { $env:MYSQL_PASSWORD = "changeme_stp_dev" }
-if (-not $env:MYSQL_DATABASE) { $env:MYSQL_DATABASE = "stp" }
+if (-not $env:MYSQL_USER) { $env:MYSQL_USER = "stk" }
+if (-not $env:MYSQL_PASSWORD) { $env:MYSQL_PASSWORD = "changeme_stk_dev" }
+if (-not $env:MYSQL_DATABASE) { $env:MYSQL_DATABASE = "stk" }
 
 Push-Location $apiDir
 try {

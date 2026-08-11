@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-logger = logging.getLogger("stp.cs2.commands")
+logger = logging.getLogger("stk.cs2.commands")
 
 
 @dataclass(frozen=True)

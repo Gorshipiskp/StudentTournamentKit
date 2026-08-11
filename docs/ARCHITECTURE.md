@@ -1,4 +1,4 @@
-# Student Tournament Platform — архитектура платформы
+# StudentTournamentKit — архитектура платформы
 
 > Версия **2.1** · 2026-08-11  
 > Источники: [VISION.md](VISION.md) · [TECH-STACK.md](TECH-STACK.md) · [DECISIONS.md](DECISIONS.md) · **[INVARIANTS.md](INVARIANTS.md)**  
@@ -37,7 +37,7 @@
 
 ## 1. Резюме
 
-**Student Tournament Platform (STP)** — система для проведения **дистанционных CS2-турниров** с полупрофессиональной трансляцией. Архитектура **распределённая по ролям инфраструктуры**, но **не микросервисная**: на Platform VPS один backend-процесс (FastAPI), фронтенды — static SPA.
+**StudentTournamentKit (STK)** — система для проведения **дистанционных CS2-турниров** с полупрофессиональной трансляцией. Архитектура **распределённая по ролям инфраструктуры**, но **не микросервисная**: на Platform VPS один backend-процесс (FastAPI), фронтенды — static SPA.
 
 ### Три зоны ответственности
 
@@ -73,7 +73,7 @@
 | P3 | Один ноутбук режиссёра | CS2 + OBS + Agent на одном хосте; минимум RAM/CPU |
 | P4 | Не микросервисы | Один API process; in-memory WS fanout |
 | P5 | CS2-only | Адаптер `cs2/` без plugin SDK |
-| P6 | Reuse MatchZy | Свой код только в STP.Bridge + thin adapter |
+| P6 | Reuse MatchZy | Свой код только в STK.Bridge + thin adapter |
 | P7 | MySQL = durable SoT for **platform-owned** state | Не «единственный source of truth» для score/OBS; см. [INVARIANTS.md](INVARIANTS.md) |
 | P8 | Secrets не в браузере | RCON, OBS password — server/agent only |
 | P9 | Desired ≠ actual until observed | Commands set intent; runtimes report actual; reconcile |
@@ -92,7 +92,7 @@
 
 ```mermaid
 flowchart TB
-    subgraph stp ["STP Platform (FastAPI monolith)"]
+    subgraph stk ["StudentTournamentKit Platform (FastAPI monolith)"]
         direction TB
         ORG["Organization & Auth"]
         TNT["Tournament Ops"]
@@ -123,7 +123,7 @@ flowchart TB
   CS2A <--> CS2
   SIG <--> AGENT
   PRD <--> AGENT
-  stp <--> MYSQL
+  stk <--> MYSQL
   AGENT <--> OBS
 ```
 
@@ -165,7 +165,7 @@ flowchart TB
     subgraph cs2_vps ["Ephemeral — CS2 VPS"]
         GAMESRV["CS2 :27015"]
         GOTV["GOTV :27020"]
-        PLUGINS["MatchZy + STP.Bridge"]
+        PLUGINS["MatchZy + STK.Bridge"]
     end
 
     subgraph director_pc ["Director Laptop — Windows"]
@@ -217,11 +217,11 @@ Organizer Instance
 
 | Процесс | Хост | Язык | Обязателен для матча |
 |---------|------|------|----------------------|
-| `stp-api` | Platform VPS | Python | Да (control) |
+| `stk-api` | Platform VPS | Python | Да (control) |
 | `nginx` | Platform VPS | — | Да |
 | `coturn` | Platform VPS | C | Да (удалённые комментаторы) |
 | `cs2` + plugins | CS2 VPS | — | **Критичен** |
-| `stp-director-agent` | Director laptop | Go | Да (production) |
+| `stk-director-agent` | Director laptop | Go | Да (production) |
 | `obs64` | Director laptop | — | Да (broadcast + Stream Delay) |
 | `cs2.exe` (spectator) | Director laptop | — | Да (картинка) |
 | `ffmpeg` (WebRTC capture) | Director laptop | — | Да (live комментаторам; не delay) |
@@ -257,7 +257,7 @@ BestCSTournaments/
 │   │   ├── nginx/
 │   │   └── coturn/
 │   └── game-server/
-│       ├── plugins/STP.Bridge/
+│       ├── plugins/STK.Bridge/
 │       ├── matchzy-config/
 │       └── systemd/
 ├── scripts/
@@ -274,7 +274,7 @@ BestCSTournaments/
 ### Зависимости между артефактами
 
 ```text
-apps/api          ←── webhooks ── STP.Bridge (CS2)
+apps/api          ←── webhooks ── STK.Bridge (CS2)
 apps/dashboard    ──REST/WS──► apps/api
 apps/overlay      ──WS───────► apps/api
 apps/judge        ──REST/WS──► apps/api
@@ -356,7 +356,7 @@ Mobile-first PWA route. Минимум UI:
 ┌─────────────────────────────────────────────┐
 │              Director Agent (Go)             │
 ├─────────────────────────────────────────────┤
-│ PlatformClient   │ WS to STP, auth, commands │
+│ PlatformClient   │ WS to STK, auth, commands │
 │ OBSSession       │ obs-websocket v5          │
 │ CapturePipeline  │ OBS Virtual Cam → FFmpeg  │
 │ WebRTCPublisher  │ Pion → commentators       │
@@ -374,7 +374,7 @@ Mobile-first PWA route. Минимум UI:
 
 ```text
 Director UI → API: POST /matches/{id}/production/scene { scene: "intro" }
-API → WS → Agent: { type: "obs.set_scene", scene: "STP_Intro" }
+API → WS → Agent: { type: "obs.set_scene", scene: "STK_Intro" }
 Agent → OBS: SetCurrentProgramScene
 Agent → API: { type: "obs.ack", ok: true }
 API → WS → Dashboard: scene confirmed
@@ -387,7 +387,7 @@ cs2 dedicated server
 └── metamod
     └── counterstrikesharp
         ├── matchzy          # match flow, ready, knife, demos
-        └── stp.bridge       # webhooks, judge pause hook, heartbeat
+        └── stk.bridge       # webhooks, judge pause hook, heartbeat
 ```
 
 ---
@@ -487,7 +487,7 @@ effective_overlay = merge(
 
 ```mermaid
 sequenceDiagram
-    participant CS2 as STP.Bridge
+    participant CS2 as STK.Bridge
     participant API as FastAPI
     participant OVL as Overlay WS
     participant OBS as OBS Browser
@@ -549,7 +549,7 @@ Agent = **reconciler** (desired → OBS), не только command executor. Н
 
 ```text
 ┌──────────── CS2 VPS ────────────┐
-│  MatchZy ──events──► STP.Bridge │
+│  MatchZy ──events──► STK.Bridge │
 │       ▲                  │      │
 │       │ commands         │ HTTPS webhook
 └───────┼──────────────────┼──────┘
@@ -606,10 +606,10 @@ Whitelist only: `LoadMatch`, `PauseMatch`, `ResumeMatch`, `ForfeitMatch`, `GetSn
 Обязательный API/RCON-derived snapshot: map, round, score, phase, paused, players.  
 Events = fast path; snapshot = recovery path; reconciliation loop на heartbeat/reconnect.
 
-### 11.5 Judge pause — hook в STP.Bridge
+### 11.5 Judge pause — hook в STK.Bridge
 
 ```csharp
-// Псевдологика в STP.Bridge (CounterStrikeSharp)
+// Псевдологика в STK.Bridge (CounterStrikeSharp)
 OnRoundStart(freeze_end: false, buy_phase: true):
   if PlatformApi.GetMatchReviewPending(matchId):
     Server.ExecuteCommand("mp_pause_match");
@@ -663,15 +663,15 @@ OBS Program Output
 
 ### 12.2 Сцены production (синхронизация OBS ↔ Overlay)
 
-| STP scene | OBS scene name | Overlay layout |
+| STK scene | OBS scene name | Overlay layout |
 |-----------|----------------|----------------|
-| `waiting` | `STP_Waiting` | waiting.html |
-| `intro` | `STP_Intro` | intro |
-| `teams` | `STP_Teams` | team lineups |
-| `ingame` | `STP_Ingame` | scoreboard minimal |
-| `break` | `STP_Break` | break / tech pause banner |
-| `replay` | `STP_Replay` | replay placeholder |
-| `winner` | `STP_Winner` | winner |
+| `waiting` | `STK_Waiting` | waiting.html |
+| `intro` | `STK_Intro` | intro |
+| `teams` | `STK_Teams` | team lineups |
+| `ingame` | `STK_Ingame` | scoreboard minimal |
+| `break` | `STK_Break` | break / tech pause banner |
+| `replay` | `STK_Replay` | replay placeholder |
+| `winner` | `STK_Winner` | winner |
 
 Director panel: одна кнопка → API atomically sets `production_scene` + sends OBS command + pushes overlay layout.
 
@@ -680,7 +680,7 @@ Director panel: одна кнопка → API atomically sets `production_scene`
 При publish турнира Platform генерирует `obs_collection.json`:
 
 - Browser Source URL с match-agnostic tournament token (swap match id via Agent)
-- Scenes pre-named `STP_*`
+- Scenes pre-named `STK_*`
 - Audio tracks documented for Voicemeeter
 
 Agent на setup: `ImportSceneCollection` via OBS WebSocket.
@@ -802,8 +802,8 @@ revoke: organizer or auto on match complete
 ### 15.3 Webhook HMAC
 
 ```text
-X-STP-Signature: sha256=hmac(secret, raw_body)
-X-STP-Event-Id: uuid
+X-STK-Signature: sha256=hmac(secret, raw_body)
+X-STK-Event-Id: uuid
 ```
 
 ---
@@ -854,7 +854,7 @@ Health ≠ heartbeat. Per component: reachability · event freshness · command 
 | Platform API | `/health` OK; `/ready` DB OK |
 | MySQL | ready check |
 | CS2 | reachable + heartbeat + events + command ack + state sync |
-| STP.Bridge | heartbeat + protocol compatible |
+| STK.Bridge | heartbeat + protocol compatible |
 | Director Agent | WS + protocol compatible + desired≈actual |
 | OBS | Agent reports connected; scene consistent |
 | Overlay | client has recent snapshot |
@@ -869,7 +869,7 @@ Health ≠ heartbeat. Per component: reachability · event freshness · command 
 
 ## 18. Будущее расширение
 
-### 18.1 BestTvGU read API (post-STP)
+### 18.1 BestTvGU read API (post-STK)
 
 Отдельный router `/api/public/v1/` с API key:
 

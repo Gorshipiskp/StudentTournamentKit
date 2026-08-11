@@ -1,7 +1,7 @@
 [project]
-name = "stp-fake-cs2"
+name = "stk-fake-cs2"
 version = "0.1.0"
-description = "Fake CS2 game server for STP Game Slice (webhooks + commands)"
+description = "Fake CS2 game server for STK Game Slice (webhooks + commands)"
 requires-python = ">=3.11"
 dependencies = []
 

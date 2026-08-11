@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/internal/cs2", tags=["internal-cs2"])
 @router.post("/events")
 async def post_cs2_events(
     request: Request,
-    x_stp_signature: str | None = Header(default=None, alias="X-STP-Signature"),
+    x_stk_signature: str | None = Header(default=None, alias="X-STK-Signature"),
 ) -> dict[str, Any]:
     raw = await request.body()
     try:
@@ -50,7 +50,7 @@ async def post_cs2_events(
                 status_code=500,
                 detail="webhook secret not configured for match",
             )
-        if not verify_signature(secret, raw, x_stp_signature):
+        if not verify_signature(secret, raw, x_stk_signature):
             raise HTTPException(status_code=401, detail="invalid HMAC signature")
 
         correlation_id = event.get("correlation_id") or get_correlation_id() or None

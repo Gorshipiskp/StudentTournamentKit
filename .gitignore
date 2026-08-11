@@ -1,4 +1,4 @@
-# Student Tournament Platform — git ignore
+# StudentTournamentKit — git ignore
 
 # --- Secrets (never commit) ---
 config/secrets/

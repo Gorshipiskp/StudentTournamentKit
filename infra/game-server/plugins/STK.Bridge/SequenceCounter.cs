@@ -1,4 +1,4 @@
-namespace STP.Bridge;
+namespace STK.Bridge;
 
 /// <summary>Monotonic sequence per match — CONTRACT §6 / INVARIANTS §6.</summary>
 public sealed class SequenceCounter

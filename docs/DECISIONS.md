@@ -11,8 +11,8 @@
 |---|---|
 | **Статус** | accepted |
 | **Контекст** | Нужно нейтральное имя, не привязанное к BestTvGU |
-| **Решение** | **Student Tournament Platform (STP)** |
-| **Последствия** | Watermark STP на overlay; репозиторий остаётся BestCSTournaments |
+| **Решение** | **StudentTournamentKit (STK)** |
+| **Последствия** | Watermark STK на overlay; репозиторий остаётся BestCSTournaments |
 
 ---
 
@@ -154,7 +154,7 @@
 |---|---|
 | **Статус** | accepted |
 | **Контекст** | BestTvGU — отдельный продукт |
-| **Решение** | Интеграция **после** STP; только публичный read API |
+| **Решение** | Интеграция **после** StudentTournamentKit; только публичный read API |
 | **Последствия** | Не блокируем разработку на BestTvGU API |
 
 ---
@@ -165,7 +165,7 @@
 |---|---|
 | **Статус** | accepted |
 | **Контекст** | Нейтральный брендинг турнира + идентификация платформы |
-| **Решение** | Едва заметный watermark STP в углу overlay; не отключается |
+| **Решение** | Едва заметный watermark STK в углу overlay; не отключается |
 | **Последствия** | CSS hardcoded или server-enforced |
 
 ---
@@ -198,7 +198,7 @@
 |---|---|
 | **Статус** | accepted |
 | **Контекст** | На дистанционных турнирах судья смотрит демки в Discord |
-| **Решение** | **Не** входит в STP; организатор организует Discord/стримы сам |
+| **Решение** | **Не** входит в STK; организатор организует Discord/стримы сам |
 | **Последствия** | Нет scope на player stream verification в v1 |
 
 ---
@@ -247,13 +247,13 @@
 
 ---
 
-## ADR-023 — CS2: MatchZy + STP.Bridge (CounterStrikeSharp)
+## ADR-023 — CS2: MatchZy + STK.Bridge (CounterStrikeSharp)
 
 | | |
 |---|---|
 | **Статус** | accepted |
 | **Контекст** | Не переписывать tournament server; нужен judge pause и webhooks |
-| **Решение** | **Metamod + CounterStrikeSharp + MatchZy** + свой плагин **STP.Bridge**; native Linux install |
+| **Решение** | **Metamod + CounterStrikeSharp + MatchZy** + свой плагин **STK.Bridge**; native Linux install |
 | **Последствия** | Webhooks → Platform API; RCON fallback; CS2 не в Docker |
 
 ---

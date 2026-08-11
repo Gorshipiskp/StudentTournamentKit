@@ -15,7 +15,7 @@
 | 3/8 | Commands: pause/resume/forfeit + command_id/ack | **done** | 2026-08-11 |
 | 4/8 | Judge review flow end-to-end (Fake) | **done** | 2026-08-11 |
 | 5/8 | Game server registry + assign + snapshot reconcile | **done** | 2026-08-11 |
-| 6/8 | STP.Bridge skeleton (C#) | **done** | 2026-08-11 |
+| 6/8 | STK.Bridge skeleton (C#) | **done** | 2026-08-11 |
 | 7/8 | deploy-cs2.sh + demo durable stub | **done** | 2026-08-11 |
 | 8/8 | Failure A–E + verify + GATE | **done** | 2026-08-11 |
 
@@ -171,11 +171,11 @@
 
 ---
 
-## P6/8 — STP.Bridge skeleton (C#)
+## P6/8 — STK.Bridge skeleton (C#)
 
 ### Делать
 
-- `infra/game-server/plugins/STP.Bridge/`:
+- `infra/game-server/plugins/STK.Bridge/`:
   - csproj CounterStrikeSharp-compatible
   - Plugin entry, config (platform URL, secret, match/server id)
   - Заготовки: webhook client, heartbeat, command listener stubs, sequence counter

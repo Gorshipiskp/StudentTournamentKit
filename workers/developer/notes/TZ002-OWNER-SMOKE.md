@@ -34,7 +34,7 @@ pwsh -File scripts/verify.ps1
 ## Live VPS (когда будет доступ)
 
 1. `deploy-cs2` на VPS (не dry-run) — см. `infra/game-server/README.md`
-2. Собрать STP.Bridge (`dotnet` на VPS) — checklist в plugin README
+2. Собрать STK.Bridge (`dotnet` на VPS) — checklist в plugin README
 3. MatchZy + Bridge → webhook на Platform → pause через API
 4. GOTV demo → durable copy
 5. В CURRENT: `live_smoke=done`

@@ -1,6 +1,6 @@
 # apps/api — Platform backend
 
-FastAPI-сервис Student Tournament Platform: REST, WebSocket, интеграции с game server и Director Agent.
+FastAPI-сервис StudentTournamentKit: REST, WebSocket, интеграции с game server и Director Agent.
 
 ## Локальный запуск (P1)
 

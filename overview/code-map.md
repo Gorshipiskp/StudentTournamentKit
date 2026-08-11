@@ -1,4 +1,4 @@
-# Student Tournament Platform — code map
+# StudentTournamentKit — code map
 
 > Структура monorepo. Foundation **GATE** (TZ001): `/health`, Compose, Alembic/`/ready`, outbox, `scripts/verify.ps1`.
 
@@ -35,7 +35,7 @@ infrastructure/ # L4 — persistence, outbox dispatcher           ← done (P3�
 | Judge workflow | `apps/api/` | `apps/judge/` | mobile browser | skeleton |
 | Commentator feed | `apps/api/` (signaling) | commentator route in overlay app | `apps/director-agent/` WebRTC | skeleton |
 | OBS control | — | `apps/dashboard/` | `apps/director-agent/` → OBS WS | skeleton |
-| CS2 game server | `apps/api/` adapter (позже) | — | `infra/game-server/`, `STP.Bridge` | skeleton |
+| CS2 game server | `apps/api/` adapter (позже) | — | `infra/game-server/`, `STK.Bridge` | skeleton |
 | Platform deploy | — | — | `infra/platform/docker-compose.yml` | **working** (P2) |
 | CS2 deploy | — | — | `scripts/deploy-cs2.*` | planned |
 | Director install | — | — | `apps/director-agent/` installer | planned |
@@ -55,7 +55,7 @@ infrastructure/ # L4 — persistence, outbox dispatcher           ← done (P3�
 | `apps/judge/` | Judge UI (Svelte) | README stub |
 | `apps/director-agent/` | Windows agent: OBS + WebRTC | README stub |
 | `infra/platform/` | Docker Compose, nginx, coturn stub | **working** (api+mysql+nginx) |
-| `infra/game-server/` | CS2 + plugins (`STP.Bridge`) | README stub |
+| `infra/game-server/` | CS2 + plugins (`STK.Bridge`) | README stub |
 | `packages/api-types/` | OpenAPI-generated types | README stub |
 | `scripts/` | verify (+ later deploy-platform/cs2) | **working** (`verify.ps1`) |
 | `tools/fake-cs2/` | Fake CS2: events + commands + snapshot | **working** (TZ002 P1) |

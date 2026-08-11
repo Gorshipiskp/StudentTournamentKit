@@ -12,7 +12,7 @@
 
 ## 0. Цель (для людей)
 
-Поднять **рабочий каркас** Student Tournament Platform: репозиторий с приложениями, API с проверкой «жив / готов», Docker Compose, миграции БД и минимальный durable outbox — чтобы следующая волна (игровой сервер и матч) ставилась уже на готовый фундамент, а не в пустоту.
+Поднять **рабочий каркас** StudentTournamentKit: репозиторий с приложениями, API с проверкой «жив / готов», Docker Compose, миграции БД и минимальный durable outbox — чтобы следующая волна (игровой сервер и матч) ставилась уже на готовый фундамент, а не в пустоту.
 
 ---
 
@@ -31,7 +31,7 @@
 
 **Вне scope:**
 
-- Живой CS2 / MatchZy / STP.Bridge (→ TZ002)
+- Живой CS2 / MatchZy / STK.Bridge (→ TZ002)
 - Overlay UI, dashboard UI, Director Agent runtime
 - Judge / WebRTC / OBS
 - Публичный BestTvGU API
