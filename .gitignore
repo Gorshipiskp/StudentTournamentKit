@@ -5,6 +5,9 @@ config/secrets/
 .env
 .env.*
 !.env.example
+apps/**/.env
+apps/**/.env.*
+!apps/**/.env.example
 *.pem
 *.key
 id_rsa*
@@ -19,10 +22,17 @@ ehthumbs.db
 # --- IDE / editors ---
 .idea/
 .vscode/
-.cursor/
 *.swp
 *.swo
 *~
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Cursor — local state only; .cursor/rules and .cursor/skills stay trackable
+.cursor/projects/
+.cursor/**/*.log
 
 # --- Python ---
 __pycache__/
@@ -42,15 +52,34 @@ htmlcov/
 .tox/
 .nox/
 pip-wheel-metadata/
+apps/api/.venv/
 
-# --- Node / frontend (when added) ---
+# --- Node / frontend ---
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-store/
+.svelte-kit/
+.vite/
+*.local
 
-# --- Build / dist ---
+# --- .NET / C# (STK.Bridge, CounterStrikeSharp build output) ---
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+
+# --- Go (director-agent; see also apps/director-agent/.gitignore) ---
+*.test
+*.out
+coverage.out
+
+# --- Build / dist (generic) ---
 dist/
 build/
 out/
@@ -67,11 +96,18 @@ logs/
 tools/fake-cs2/.venv/
 tools/fake-cs2/*.jsonl
 
-# --- Docker / local volumes (if created under repo) ---
+# --- CS2 local install (if symlinked/copied into repo) ---
+/cs2_dedicated_server/
+gameinfo.gi.bak*
+gameinfo.gi.STK-FIXED
+gameinfo.gi.stk-pending
+gameinfo.gi.*.bak-stk*
+
+# --- Plugin install cache (install-local-cs2-plugins.ps1) ---
+stk-cs2-plugins-install/
+
+# --- Docker / local volumes ---
 *.sql.gz
 
-# --- Cursor (local agent state; keep project rules) ---
-# .cursor/rules and .cursor/skills are tracked; ignore caches if any
-.cursor/*.log
-/cs2_dedicated_server/
+# --- TLS / local certs ---
 /certs/

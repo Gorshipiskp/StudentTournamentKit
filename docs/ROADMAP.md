@@ -131,16 +131,18 @@ Owner smoke: [TZ004-OWNER-SMOKE.md](../workers/developer/notes/TZ004-OWNER-SMOKE
 
 ## Этап 5 — Broadcast Slice
 
-**Фокус:** Полупро эфир, delay, мониторинг.
+**Фокус:** Полупро эфир, delay, мониторинг.  
+**ТЗ:** [tasks/006_BROADCAST-SLICE.md](../tasks/006_BROADCAST-SLICE.md) · ранбук M=7.  
+**Статус:** in progress (S007).
 
 | Deliverable | Описание |
 |-------------|----------|
-| Delay pipeline | **OBS Stream Delay** ~90–120 с (чек-лист из настроек турнира); FFmpeg в Agent — только если понадобится (v2) |
-| Scene polish | Intro, teams, break, winner, transitions |
-| Health dashboard | CS2, platform, agent, overlay, OBS |
-| Match audit log | UI for match actions |
+| Delay pipeline | OBS Stream Delay checklist + tournament delay hint (ADR-024 v1) |
+| Scene polish | Intro, teams, break, winner overlay layouts |
+| Health dashboard | CS2, platform, agent, overlay, OBS aggregate |
+| Match audit log | Persist + UI for match actions |
 
-**Gate:** Тестовый эфир на Twitch с delay; semi-pro вид.
+**Gate:** Fake OBS smoke; overlay semi-pro; health + audit; Twitch live optional.
 
 ---
 
@@ -186,5 +188,6 @@ Owner smoke: [TZ004-OWNER-SMOKE.md](../workers/developer/notes/TZ004-OWNER-SMOKE
 
 ## Следующий шаг
 
-**TZ006 Broadcast Slice** — Team Lead открывает ТЗ/ранбук.  
+**TZ006 Broadcast Slice** — `workers/developer/notes/TZ006-PROMPT-RUNBOOK.md` (P1/7).  
+TZ005 Tournament GATE closed.
 TZ005 Tournament GATE closed (`live_cs2`/`live_webrtc` = blocked).

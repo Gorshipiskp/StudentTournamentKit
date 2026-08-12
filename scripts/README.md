@@ -4,15 +4,17 @@
 
 | Скрипт | Назначение |
 |--------|------------|
-| **`dev-remote.ps1`** | **Dev (remote MySQL):** API + overlay + dashboard одной командой |
+| **`dev-remote.ps1`** | **Dev (remote MySQL):** API + overlay + dashboard + judge + agent (fake-webrtc) |
 | **`dev-remote.sh`** | То же для bash/WSL |
 | `verify.ps1` | GATE: pytest, сборки, fake-cs2, go test |
 | `verify.sh` | То же для bash |
 | `deploy-cs2.sh` | CS2 VPS install — **`--dry-run` по умолчанию** |
 | `deploy-cs2.ps1` | Windows-хелпер для deploy-cs2 |
+| **`install-local-cs2-plugins.ps1`** | **@owner Windows DS:** Metamod + CSS + MatchZy + STK.Bridge |
 
 Операторский runbook CS2: [`infra/game-server/README.md`](../infra/game-server/README.md).  
-Live SSH-деплой — только @owner.
+Локальный CS2 DS @owner: [`infra/game-server/LOCAL-CS2-DS.md`](../infra/game-server/LOCAL-CS2-DS.md).  
+Live SSH-деплой на VPS — только @owner.
 
 ---
 
@@ -26,10 +28,12 @@ Live SSH-деплой — только @owner.
 | Процесс | Порт | Откуда |
 |---------|------|--------|
 | Platform API (uvicorn, reload) | `8000` | `apps/api` |
-| Overlay (Vite dev) | `5173` | `apps/overlay` |
-| Dashboard режиссёра (Vite dev) | `5174` | `apps/dashboard` |
+| Overlay + `/watch` (Vite dev) | `5173` | `apps/overlay` |
+| Dashboard + `/admin` + `/director` (Vite dev) | `5174` | `apps/dashboard` |
+| Judge (Vite dev) | `5175` | `apps/judge` |
+| Director Agent (optional) | — | `apps/director-agent` (`--fake-obs --fake-webrtc` по умолчанию) |
 
-**Не поднимает:** Docker Compose, nginx, mysql-контейнер, Director Agent, OBS.  
+**Не поднимает:** Docker Compose, nginx, mysql-контейнер, OBS.  
 Vite проксирует `/api` и `/ws` на `:8000` — nginx для dev не нужен.
 
 Перед API: **`alembic upgrade head`** к remote БД (можно `-SkipMigrate`).
@@ -46,6 +50,11 @@ MYSQL_SSL=1
 # MYSQL_SSL_CA=C:/path/to/ca.pem   # если Timeweb требует CA
 
 STK_AGENT_TOKEN=dev_agent_token_change_me
+STK_ORGANIZER_USERNAME=organizer
+STK_ORGANIZER_PASSWORD=changeme_organizer
+STK_DASHBOARD_ORIGIN=http://127.0.0.1:5174
+STK_JUDGE_ORIGIN=http://127.0.0.1:5175
+STK_WATCH_ORIGIN=http://127.0.0.1:5173
 API_PORT=8000
 ```
 
@@ -64,15 +73,17 @@ cd C:\BestCSTournaments
 .\scripts\dev-remote.ps1 -MatchId m_live
 ```
 
-Откроются **3 окна** PowerShell (логи отдельно). Остановка: **Ctrl+C** в каждом или закрыть окна.
+Откроются **до 5 окон** PowerShell (API + 3 Vite + Agent). Остановка: **Ctrl+C** в каждом или закрыть окна.
 
 **Флаги:**
 
 | Флаг | Эффект |
 |------|--------|
-| `-MatchId m_live` | id матча в подсказках URL и curl |
-| `-ApiOnly` | только API, без Vite |
+| `-MatchId m_live` | id матча в подсказках URL и Agent |
+| `-ApiOnly` | только API, без Vite и Agent |
 | `-SkipMigrate` | не запускать alembic |
+| `-SkipAgent` | без окна director-agent |
+| `-ObsPassword "..."` | Agent с реальным OBS WS (без `--fake-obs`) |
 | `-AllowLocalDb` | разрешить `MYSQL_HOST=127.0.0.1` |
 
 **URL после старта:**
@@ -80,8 +91,11 @@ cd C:\BestCSTournaments
 ```text
 http://127.0.0.1:8000/health
 http://127.0.0.1:8000/ready
+http://127.0.0.1:5174/admin
 http://127.0.0.1:5173/overlay/<matchId>
 http://127.0.0.1:5174/director/<matchId>
+http://127.0.0.1:5173/watch?token=<invite>
+http://127.0.0.1:5175/?token=<invite>
 ```
 
 **Создать матч (PowerShell):**
@@ -93,13 +107,17 @@ Invoke-RestMethod -Method POST `
   -Body '{"match_id":"m_live","game_server_id":"srv_fake","webhook_secret":"dev_webhook_secret_change_me","map_name":"de_mirage"}'
 ```
 
-**Agent + OBS** — вручную после настройки сцен OBS ([`apps/director-agent/templates/README.md`](../apps/director-agent/templates/README.md)):
+**Agent + OBS вручную** (если `-SkipAgent` или нужен только реальный OBS без автозапуска):
 
 ```powershell
 cd apps/director-agent
 .\stk-director-agent.exe --platform http://127.0.0.1:8000 --match m_live `
-  --token dev_agent_token_change_me --obs-url ws://127.0.0.1:4455 --obs-password "…"
+  --token dev_agent_token_change_me --fake-obs --fake-webrtc
+# real OBS:
+.\stk-director-agent.exe ... --obs-password "..." --fake-webrtc
 ```
+
+Сцены OBS: [`apps/director-agent/templates/README.md`](../apps/director-agent/templates/README.md).
 
 ### bash / WSL
 

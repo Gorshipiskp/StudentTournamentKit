@@ -4,6 +4,10 @@
 
 ---
 
+## 2026-08-12 — TZ006 старт
+
+- TZ005 GATE closed; CURRENT_TASK → TZ006 Broadcast; ждать P1/7
+
 ## 2026-08-12 — TZ005 P7 GATE closed
 
 - `scripts/verify.ps1` → **VERIFY OK — TZ005** (96 pytest; frontend builds; agent)

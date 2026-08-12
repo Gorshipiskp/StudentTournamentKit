@@ -2,7 +2,9 @@
 
 Контракт: [CONTRACT.md](./CONTRACT.md) · Bridge: [plugins/STK.Bridge/](./plugins/STK.Bridge/) · Fake (без VPS): `tools/fake-cs2/`.
 
-**live deploy:** только с доступом @owner (SSH). Локально всегда начинай с dry-run.
+**Локальный CS2 DS @owner (Windows):** [LOCAL-CS2-DS.md](./LOCAL-CS2-DS.md) — `Z:\cs2_dedicated_server\…\Counter-Strike Global Offensive`.
+
+**live deploy на VPS:** только с доступом @owner (SSH). Локально всегда начинай с dry-run.
 
 ---
 
@@ -82,4 +84,5 @@ Env: `DEMO_DURABLE_ROOT` (по умолчанию `data/demos` от корня �
 | CONTRACT + Fake | working |
 | Bridge skeleton | в репо; build может быть blocked без SDK |
 | deploy-cs2.sh | dry-run + scaffolding; полный Steam/CSS — оператор на VPS |
-| live_smoke | **blocked** без SSH/@owner |
+| **Local CS2 DS (@owner)** | Metamod + CSS + MatchZy + STK.Bridge — `scripts/install-local-cs2-plugins.ps1` |
+| live_smoke | **blocked** до gameinfo patch + Platform register + Bridge hooks |

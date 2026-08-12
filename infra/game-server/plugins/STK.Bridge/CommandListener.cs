@@ -38,7 +38,11 @@ public sealed class CommandListener : IAsyncDisposable
         if (_listener is not null)
             return;
 
-        var prefix = $"http://{_config.CommandListenHost}:{_config.CommandListenPort}/";
+        var host = string.IsNullOrWhiteSpace(_config.CommandListenHost) ? "127.0.0.1" : _config.CommandListenHost.Trim();
+        // HttpListener on Windows: 0.0.0.0/+ needs URL ACL; 127.0.0.1 works for local Platform.
+        if (host is "0.0.0.0" or "+" or "*")
+            host = "127.0.0.1";
+        var prefix = $"http://{host}:{_config.CommandListenPort}/";
         _listener = new HttpListener();
         _listener.Prefixes.Add(prefix);
         _listener.Start();

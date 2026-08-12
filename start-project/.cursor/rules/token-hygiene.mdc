@@ -1,0 +1,13 @@
+---
+description: Экономия токенов ИИ-команды без потери качества
+alwaysApply: true
+---
+
+# Токены
+
+Канон: `workers/TOKEN-HYGIENE.md`.
+
+- **L0** (Промпт 2+): не читать AGENTS/tasks/README/CURRENT журнал целиком; ТЗ — только § из runbook.
+- **Файлы >300 строк:** grep / Read с limit.
+- **1 чат = 1 `Промпт N/M`**; self-review subagent только если diff > ~400 строк.
+- **CURRENT.md:** только § спринт/очередь; журнал top-60.

@@ -55,11 +55,11 @@ dotnet build -c Release
 
 ---
 
-## BUILD BLOCKER (эта машина разработчика)
+## BUILD (owner Windows DS)
 
 ```text
-Status: blocked_local_build
-Reason: .NET SDK (`dotnet`) не найден в PATH на рабочей станции агента (2026-08-11).
+Status: builds OK with .NET SDK 8.0.424 (2026-08-12)
+Install: scripts/install-local-cs2-plugins.ps1
 ```
 
 ### Checklist на VPS / build machine владельца

@@ -70,7 +70,7 @@ pwsh -File scripts/verify.ps1
 
 Smoke для Game Slice (Fake CS2): [workers/developer/notes/TZ002-OWNER-SMOKE.md](workers/developer/notes/TZ002-OWNER-SMOKE.md).
 
-Живой CS2 на VPS нужен отдельно (доступ владельца + деплой из `infra/game-server/`).
+Живой CS2: локальный DS @owner — [`infra/game-server/LOCAL-CS2-DS.md`](infra/game-server/LOCAL-CS2-DS.md) (`Z:\cs2_dedicated_server\…`). Ubuntu VPS — [`infra/game-server/README.md`](infra/game-server/README.md).
 
 ---
 

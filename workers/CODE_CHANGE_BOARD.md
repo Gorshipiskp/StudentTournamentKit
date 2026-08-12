@@ -8,6 +8,18 @@
 
 ## Ожидают обработки
 
+### 2026-08-12 — S006 closed / TZ006 opened @team-lead
+
+- **Пакеты:** `tasks/006_BROADCAST-SLICE.md`, `TZ006-PROMPT-RUNBOOK.md`, sprint S007
+- **Суть:** Tournament волна закрыта; Broadcast delay/health/audit
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — Local CS2 DS @owner
+
+- **Пакеты:** `infra/game-server/LOCAL-CS2-DS.md`, `.env.example`, README ссылки
+- **Суть:** Windows DS `Z:\cs2_dedicated_server\…` — основной live CS2 для recon/smoke
+- **tech-overview:** systems/cs2-dedicated (когда появится)
+
 ### 2026-08-12 — TZ005 GATE closed @developer
 
 - **Пакеты:** `scripts/verify.ps1` (TZ005), `TZ005-OWNER-SMOKE.md`, tasks/005 + ROADMAP этап 4

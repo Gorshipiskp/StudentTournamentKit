@@ -13,7 +13,7 @@ public sealed class StkBridgeConfig
     public string ProtocolVersion { get; set; } = "1";
     public string BridgeVersion { get; set; } = "0.1.0";
     public int HeartbeatIntervalSeconds { get; set; } = 15;
-    public string CommandListenHost { get; set; } = "0.0.0.0";
+    public string CommandListenHost { get; set; } = "127.0.0.1";
     public int CommandListenPort { get; set; } = 27099;
     public string EventsPath { get; set; } = "/api/v1/internal/cs2/events";
 

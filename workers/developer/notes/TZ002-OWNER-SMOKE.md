@@ -31,7 +31,19 @@ pwsh -File scripts/verify.ps1
 Ожидание: артефакты + compose + pytest (A–E) + fake self-test → **VERIFY OK**.  
 Строка: `live_smoke=blocked (no VPS / @owner SSH)`.
 
-## Live VPS (когда будет доступ)
+## Live CS2 (@owner Windows DS)
+
+Корень установки: [`infra/game-server/LOCAL-CS2-DS.md`](../../../infra/game-server/LOCAL-CS2-DS.md).
+
+```text
+1. CS2_INSTALL_DIR в .env → путь на Z:\cs2_dedicated_server\…
+2. MatchZy + CounterStrikeSharp + STK.Bridge (см. infra/game-server/README.md)
+3. Register game-server + assign match (как в шагах 1–3 выше, endpoint Bridge)
+4. Старт dedicated → webhook на Platform → pause через judge API
+5. В CURRENT: live_smoke=done (local) или live_cs2=done
+```
+
+## Live VPS (дистанционный турнир)
 
 1. `deploy-cs2` на VPS (не dry-run) — см. `infra/game-server/README.md`
 2. Собрать STK.Bridge (`dotnet` на VPS) — checklist в plugin README

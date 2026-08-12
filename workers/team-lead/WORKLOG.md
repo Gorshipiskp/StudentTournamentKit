@@ -4,6 +4,12 @@
 - **S004** открыт: TZ003 Production Slice + PROMPT-RUNBOOK **M=7**; developer **ready P1/7**
 - Артефакты: `tasks/003_PRODUCTION-SLICE.md`, `TZ003-NEW-CHAT.md`
 
+## 2026-08-12 — Broadcast Slice
+
+- S006 / TZ005 Tournament GATE closed; архив S006
+- **S007** открыт: TZ006 Broadcast + PROMPT-RUNBOOK **M=7**; developer **ready P1/7**
+- Артефакты: `tasks/006_BROADCAST-SLICE.md`, `TZ006-NEW-CHAT.md`
+
 ## 2026-08-12 — Tournament Slice
 
 - S005 / TZ004 People GATE closed (`live_webrtc=blocked`); архив S005
