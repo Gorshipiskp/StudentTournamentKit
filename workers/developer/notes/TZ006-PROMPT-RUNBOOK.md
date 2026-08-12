@@ -11,13 +11,13 @@
 
 | P | Цель | Статус | Чат / дата |
 |---|------|--------|------------|
-| 1/7 | Broadcast contract + delay checklist (director UI) | pending | |
-| 2/7 | Overlay scene polish (6 layouts + branding) | pending | |
-| 3/7 | match_audit_log persistence + writers | pending | |
-| 4/7 | Match health aggregate API | pending | |
-| 5/7 | Director: health panel + delay widget | pending | |
-| 6/7 | Audit log UI (director match) | pending | |
-| 7/7 | verify + OWNER-SMOKE + GATE | pending | |
+| 1/7 | Broadcast contract + delay checklist (director UI) | done | 2026-08-12 |
+| 2/7 | Overlay scene polish (6 layouts + branding) | done | 2026-08-12 |
+| 3/7 | match_audit_log persistence + writers | done | 2026-08-12 |
+| 4/7 | Match health aggregate API | done | 2026-08-12 |
+| 5/7 | Director: health panel + delay widget | done | 2026-08-12 |
+| 6/7 | Audit log UI (director match) | done | 2026-08-12 |
+| 7/7 | verify + OWNER-SMOKE + GATE | done | 2026-08-12 |
 
 Статусы: `pending` · `running` · `done` · `blocked`
 

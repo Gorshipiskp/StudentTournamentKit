@@ -19,6 +19,12 @@ class RegistryConflict(Exception):
         self.message = message
 
 
+def is_fake_server_id(server_id: str | None) -> bool:
+    if not server_id:
+        return True
+    return server_id == "srv_fake" or server_id.startswith("srv_fake")
+
+
 def create_game_server(
     uow: UnitOfWork,
     *,
@@ -49,7 +55,15 @@ def assign_server_to_match(
     *,
     match_id: str,
     server_id: str,
+    commit: bool = True,
+    force: bool = False,
 ) -> Match:
+    """
+    Bind a registered game-server to a match.
+
+    force=True: steal server from another match (local smoke / live-cs2-local).
+    Clears previous match.game_server_id when it pointed at this server.
+    """
     match = uow.matches.get(match_id)
     if match is None:
         raise KeyError("match not found")
@@ -60,19 +74,30 @@ def assign_server_to_match(
         None,
         match_id,
     }:
-        raise RegistryConflict(
-            f"server already assigned to match {server.assigned_match_id}"
-        )
+        if not force:
+            raise RegistryConflict(
+                f"server already assigned to match {server.assigned_match_id}"
+            )
+        prev_match = uow.matches.get(server.assigned_match_id)
+        if prev_match is not None and prev_match.game_server_id == server.id:
+            prev_match.game_server_id = None
+            uow.matches.save(prev_match)
+        server.status = SERVER_AVAILABLE
+        server.assigned_match_id = None
+        uow.game_servers.save(server)
+
+    # Allow replace when unset / Fake; block stealing a real live binding
     if (
         match.game_server_id
         and match.game_server_id != server_id
         and match.status != MATCH_SCHEDULED
+        and not is_fake_server_id(match.game_server_id)
     ):
-        raise RegistryConflict(
-            f"match already has server {match.game_server_id}"
-        )
+        if not force:
+            raise RegistryConflict(
+                f"match already has server {match.game_server_id}"
+            )
 
-    # Release previous server if re-assigning from scheduled
     if match.game_server_id and match.game_server_id != server_id:
         prev = uow.game_servers.get(match.game_server_id)
         if prev is not None and prev.assigned_match_id == match_id:
@@ -93,5 +118,6 @@ def assign_server_to_match(
     server.assigned_match_id = match.id
     uow.matches.save(match)
     uow.game_servers.save(server)
-    uow.commit()
+    if commit:
+        uow.commit()
     return match

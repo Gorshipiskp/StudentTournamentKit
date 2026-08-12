@@ -118,7 +118,10 @@ def get_logo(tournament_id: str) -> Response:
     return Response(
         content=branding.logo_blob,
         media_type=branding.logo_content_type or "image/png",
-        headers={"Cache-Control": "public, max-age=60"},
+        headers={
+            "Cache-Control": "public, max-age=300, must-revalidate",
+            "ETag": f'"{branding.logo_version()}"',
+        },
     )
 
 
@@ -134,5 +137,8 @@ def get_bg(tournament_id: str) -> Response:
     return Response(
         content=branding.bg_blob,
         media_type=branding.bg_content_type or "image/png",
-        headers={"Cache-Control": "public, max-age=60"},
+        headers={
+            "Cache-Control": "public, max-age=300, must-revalidate",
+            "ETag": f'"{branding.bg_version()}"',
+        },
     )

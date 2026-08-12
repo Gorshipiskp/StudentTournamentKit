@@ -32,15 +32,19 @@ def apply_snapshot_to_match(match: Match, snapshot: dict[str, Any]) -> list[str]
                 match.score_team_b = b
                 changed.append("score")
 
-    round_no = snapshot.get("round")
-    if isinstance(round_no, int) and round_no != match.round_number:
-        match.round_number = round_no
-        changed.append("round")
-
     phase = snapshot.get("phase")
     if isinstance(phase, str) and phase and phase != match.phase:
         match.phase = phase
         changed.append("phase")
+
+    round_no = snapshot.get("round")
+    if phase == "warmup":
+        if match.round_number != 0:
+            match.round_number = 0
+            changed.append("round")
+    elif isinstance(round_no, int) and round_no != match.round_number:
+        match.round_number = round_no
+        changed.append("round")
 
     map_name = snapshot.get("map")
     if isinstance(map_name, str) and map_name and map_name != match.map_name:
@@ -53,7 +57,8 @@ def apply_snapshot_to_match(match: Match, snapshot: dict[str, Any]) -> list[str]
         changed.append("actual_paused")
 
     last_seq = snapshot.get("last_sequence")
-    if isinstance(last_seq, int) and last_seq > match.last_sequence:
+    if isinstance(last_seq, int) and last_seq != match.last_sequence:
+        # May go down after Bridge restart (counter reset).
         match.last_sequence = last_seq
         changed.append("last_sequence")
 

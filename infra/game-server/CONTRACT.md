@@ -82,12 +82,16 @@ X-STK-Event-Id: 550e8400-e29b-41d4-a716-446655440000
 |--------|-------|------------------|
 | `match_loaded` | Матч загружен на сервере | `map` |
 | `round_start` | Старт раунда (в т.ч. buy) | `round`, `phase` (`buy` \| `live` \| …) |
-| `round_end` | Конец раунда + счёт | `round`, `score` `{ "team_a", "team_b" }`, `map` |
+| `round_end` | Конец раунда + счёт | `round`, `score` `{ "team_a", "team_b" }`, `map`, опц. `winner` (`team_a`\|`team_b`) |
 | `score_changed` | Явное обновление счёта (если не в `round_end`) | `score`, `round` |
 | `tech_pause_started` | Фактическая тех. пауза | `reason` (опц.) |
 | `tech_pause_ended` | Пауза снята | — |
 | `match_completed` | Матч окончен на сервере | `score`, `reason` (`normal` \| `forfeit` \| …) |
 | `heartbeat` | Периодический пульс Bridge/Fake | `bridge_version`, `protocol_version` |
+| `bomb_planted` | C4 заложена | опц. `site`, `timer_sec` (сек до взрыва, default 40) |
+| `bomb_defuse_start` | Начат дефьюз | опц. `has_kit` |
+| `bomb_defused` | Бомба разминирована | опц. `site` |
+| `bomb_exploded` | Взрыв C4 | опц. `site` |
 
 Handlers на Platform — идемпотентны: `apply(e); apply(e)` безопасно.
 

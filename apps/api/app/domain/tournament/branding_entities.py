@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -27,6 +28,16 @@ class TournamentBranding:
     def has_bg(self) -> bool:
         return bool(self.bg_blob)
 
+    def logo_version(self) -> str | None:
+        if not self.logo_blob:
+            return None
+        return hashlib.sha256(self.logo_blob).hexdigest()[:12]
+
+    def bg_version(self) -> str | None:
+        if not self.bg_blob:
+            return None
+        return hashlib.sha256(self.bg_blob).hexdigest()[:12]
+
     def to_public_meta(self) -> dict[str, Any]:
         return {
             "tournament_id": self.tournament_id,
@@ -35,6 +46,8 @@ class TournamentBranding:
             "has_bg": self.has_bg(),
             "logo_content_type": self.logo_content_type if self.has_logo() else None,
             "bg_content_type": self.bg_content_type if self.has_bg() else None,
+            "logo_version": self.logo_version(),
+            "bg_version": self.bg_version(),
         }
 
     def to_overlay_branding(self) -> dict[str, Any]:
@@ -46,7 +59,9 @@ class TournamentBranding:
             "bg_url": None,
         }
         if self.has_logo():
-            out["logo_url"] = f"/api/v1/tournaments/{tid}/branding/logo"
+            ver = self.logo_version()
+            out["logo_url"] = f"/api/v1/tournaments/{tid}/branding/logo?v={ver}"
         if self.has_bg():
-            out["bg_url"] = f"/api/v1/tournaments/{tid}/branding/bg"
+            ver = self.bg_version()
+            out["bg_url"] = f"/api/v1/tournaments/{tid}/branding/bg?v={ver}"
         return out

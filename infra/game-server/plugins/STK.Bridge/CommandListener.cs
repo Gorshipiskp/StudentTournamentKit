@@ -22,15 +22,17 @@ public sealed class CommandListener : IAsyncDisposable
 
     private readonly StkBridgeConfig _config;
     private readonly SequenceCounter _sequence;
+    private readonly MatchLiveState _live;
     private readonly Dictionary<string, JsonElement> _acks = new();
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private Task? _loop;
 
-    public CommandListener(StkBridgeConfig config, SequenceCounter sequence)
+    public CommandListener(StkBridgeConfig config, SequenceCounter sequence, MatchLiveState live)
     {
         _config = config;
         _sequence = sequence;
+        _live = live;
     }
 
     public void Start()
@@ -185,20 +187,16 @@ public sealed class CommandListener : IAsyncDisposable
         }
     }
 
-    private object BuildStubSnapshot() => new
+    private object BuildStubSnapshot()
     {
-        match_id = _config.MatchId,
-        server_id = _config.ServerId,
-        map = (string?)null,
-        round = 0,
-        score = new { team_a = 0, team_b = 0 },
-        phase = "warmup",
-        paused = false,
-        loaded = false,
-        completed = false,
-        last_sequence = _sequence.Current,
-        players = Array.Empty<object>(),
-    };
+        // Always refresh from live CS2 before GetSnapshot (warmup resets round to 0).
+        var (scoreA, scoreB) = GameScoreReader.ReadCtTScores();
+        var map = GameScoreReader.CurrentMap();
+        var phase = GameScoreReader.DisplayPhase();
+        var round = GameScoreReader.DisplayRound(scoreA, scoreB);
+        _live.Observe(round, scoreA, scoreB, phase, map);
+        return _live.Snapshot(_config.MatchId, _config.ServerId, _sequence.Current);
+    }
 
     private static async Task WriteJsonAsync(HttpListenerResponse response, int code, object payload)
     {

@@ -17,12 +17,15 @@ def merge_overlay_data(
     desired_scene: str,
     manual_overrides: dict[str, Any] | None = None,
     branding: dict[str, Any] | None = None,
+    tournament_name: str | None = None,
+    live_fx: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Priority: judge_banner > manual_overrides > game_state (score/round/map).
     Scene always from production desired.
     Watermark always visible (no disable flag).
     Branding is additive (logo_url / colors) — never hides watermark.
+    live_fx is ephemeral broadcast chrome (bomb / round win); optional.
     """
     overrides = dict(manual_overrides or {})
     score = match_public.get("score") or {}
@@ -61,6 +64,10 @@ def merge_overlay_data(
         "judge": {"status": judge_status, "banner": banner},
         "watermark": {"text": WATERMARK_TEXT, "visible": True},
     }
+    if tournament_name:
+        data["tournament_name"] = tournament_name
     if branding:
         data["branding"] = branding
+    if live_fx:
+        data["fx"] = live_fx
     return data

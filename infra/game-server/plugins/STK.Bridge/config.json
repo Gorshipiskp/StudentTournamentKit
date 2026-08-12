@@ -1,12 +1,12 @@
-{
-  "PlatformUrl": "http://127.0.0.1:8000",
-  "WebhookSecret": "dev_webhook_secret_change_me",
-  "MatchId": "m_dev",
-  "ServerId": "srv_dev",
-  "ProtocolVersion": "1",
-  "BridgeVersion": "0.1.0",
-  "HeartbeatIntervalSeconds": 15,
-  "CommandListenHost": "127.0.0.1",
-  "CommandListenPort": 27099,
-  "EventsPath": "/api/v1/internal/cs2/events"
+﻿{
+    "PlatformUrl":  "http://127.0.0.1:8000",
+    "WebhookSecret":  "dev_webhook_secret_change_me",
+    "MatchId":  "1d081596-abe7-4ca8-8a8b-ec7180967eda",
+    "ServerId":  "srv_local",
+    "ProtocolVersion":  "1",
+    "BridgeVersion":  "0.2.0",
+    "HeartbeatIntervalSeconds":  15,
+    "CommandListenHost":  "127.0.0.1",
+    "CommandListenPort":  27099,
+    "EventsPath":  "/api/v1/internal/cs2/events"
 }

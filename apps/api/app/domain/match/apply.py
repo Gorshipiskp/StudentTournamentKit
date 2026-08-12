@@ -27,6 +27,10 @@ _KNOWN_TYPES = frozenset(
         "tech_pause_ended",
         "match_completed",
         "heartbeat",
+        "bomb_planted",
+        "bomb_defuse_start",
+        "bomb_defused",
+        "bomb_exploded",
     }
 )
 
@@ -70,15 +74,21 @@ def apply_game_event(
         if sequence > 1:
             match.reconcile_needed = True
     elif sequence < expected:
-        match.reconcile_needed = True
-        return ApplyResult(applied=False, reason="out_of_order")
+        # True late OOO is usually adjacent (seq 5 after 6).
+        # Large rewind = Bridge/plugin restart (counter not persisted) — adopt cursor.
+        if sequence >= 1 and (match.last_sequence - sequence) >= 10:
+            match.last_sequence = sequence - 1
+            match.reconcile_needed = True
+        else:
+            match.reconcile_needed = True
+            return ApplyResult(applied=False, reason="out_of_order")
     elif sequence > expected:
         match.reconcile_needed = True
 
     previous_status = match.status
     score_changed = False
     transitions: list[str] = []
-    had_gap = match.last_sequence > 0 and sequence > expected
+    had_gap = match.last_sequence > 0 and sequence > match.last_sequence + 1
 
     if event_type == "match_loaded":
         map_name = payload.get("map")
@@ -95,7 +105,8 @@ def apply_game_event(
         phase = payload.get("phase")
         if isinstance(phase, str) and phase:
             match.phase = phase
-        if match.status in _PRE_LIVE:
+        # Warmup must not promote the match to live (Bridge may still emit edge cases).
+        if phase != "warmup" and match.status in _PRE_LIVE:
             match.status = MATCH_LIVE
 
     elif event_type == "round_end":
@@ -131,6 +142,15 @@ def apply_game_event(
         match.actual_paused = False
 
     elif event_type == "heartbeat":
+        pass
+
+    elif event_type in {
+        "bomb_planted",
+        "bomb_defuse_start",
+        "bomb_defused",
+        "bomb_exploded",
+    }:
+        # Overlay FX only — score/phase unchanged (round_end still authoritative).
         pass
 
     status_changed = previous_status != match.status

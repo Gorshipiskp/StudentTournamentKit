@@ -1,22 +1,5 @@
-:root {
-  --bg: #101820;
-  --panel: #1c2733;
-  --ink: #f2f5f8;
-  --muted: #9aabbc;
-  --accent: #2f8f7a;
-  --accent-press: #267564;
-  --warn: #d4a017;
-  --danger: #c94a4a;
-  --danger-press: #a83c3c;
-  --ok: #4caf6a;
-  --border: #2e3c4c;
-  --font: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
-  --tap: 3.25rem;
-}
-
-* {
-  box-sizing: border-box;
-}
+@import '@stk/ui-tokens/tokens.css';
+@import '@stk/ui-tokens/primitives.css';
 
 html,
 body,
@@ -24,13 +7,60 @@ body,
   margin: 0;
   min-height: 100%;
   min-height: 100dvh;
-  background: var(--bg);
-  color: var(--ink);
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text);
   font-family: var(--font);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -5%, rgba(40, 44, 52, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 95% 5%, rgba(50, 38, 18, 0.12), transparent 50%);
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.btn {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.9rem 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
 }

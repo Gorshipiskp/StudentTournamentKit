@@ -15,6 +15,7 @@ from app.infrastructure.persistence.repositories import (
     SqlAlchemyGameEventRepository,
     SqlAlchemyGameServerRepository,
     SqlAlchemyInviteTokenRepository,
+    SqlAlchemyMatchAuditLogRepository,
     SqlAlchemyMatchRepository,
     SqlAlchemyOutboxRepository,
     SqlAlchemyOverlayStateRepository,
@@ -44,6 +45,7 @@ class SqlAlchemyUnitOfWork:
         self.production = SqlAlchemyProductionSessionRepository(self.session)
         self.invites = SqlAlchemyInviteTokenRepository(self.session)
         self.outbox = SqlAlchemyOutboxRepository(self.session)
+        self.audit = SqlAlchemyMatchAuditLogRepository(self.session)
 
     def __enter__(self) -> Self:
         return self

@@ -3,12 +3,15 @@
 export type MatchPublic = {
   id: string;
   status: string;
+  tournament_id?: string;
   score: { team_a: number; team_b: number };
   round: number;
   map: string | null;
   phase: string | null;
   judge_banner: string | null;
   actual_paused: boolean;
+  /** Desired Twitch delay (tournament settings); not verified OBS actual (F7). */
+  configured_broadcast_delay_seconds?: number | null;
 };
 
 export type ProductionPublic = {
@@ -20,6 +23,41 @@ export type ProductionPublic = {
   broadcast_status: string;
 };
 
+export type HealthStatus = 'HEALTHY' | 'DEGRADED' | 'OFFLINE' | 'UNKNOWN';
+
+export type HealthComponent = {
+  status: HealthStatus;
+  raw?: string;
+  detail?: string;
+  revision?: number | null;
+  age_seconds?: number | null;
+  scene?: string | null;
+  mode?: string;
+  id?: string | null;
+  last_heartbeat?: string | null;
+};
+
+export type MatchHealth = {
+  match_id: string;
+  overall: HealthStatus;
+  components: {
+    platform: HealthComponent;
+    agent: HealthComponent;
+    obs: HealthComponent;
+    overlay: HealthComponent;
+    game_server: HealthComponent;
+    broadcast: HealthComponent;
+    whip?: HealthComponent;
+  };
+  production: {
+    desired_scene: string;
+    actual_scene: string | null;
+    agent_status: string;
+    obs_status: string;
+    broadcast_status: string;
+  };
+};
+
 export type OverlaySnapshot = {
   version: number;
   data: {
@@ -27,6 +65,20 @@ export type OverlaySnapshot = {
     team_a: { name: string; score: number };
     team_b: { name: string; score: number };
   };
+};
+
+export type AuditEntry = {
+  id: string;
+  match_id: string;
+  tournament_id: string | null;
+  correlation_id: string | null;
+  request_id: string | null;
+  actor_type: string;
+  actor_id: string | null;
+  action: string;
+  payload: Record<string, unknown>;
+  result: string;
+  created_at: string | null;
 };
 
 export type TournamentPublic = {
@@ -72,6 +124,8 @@ export type BrandingPublic = {
   has_bg: boolean;
   logo_content_type: string | null;
   bg_content_type: string | null;
+  logo_version?: string | null;
+  bg_version?: string | null;
 };
 
 const SCENES = ['waiting', 'intro', 'teams', 'ingame', 'break', 'winner'] as const;
@@ -282,12 +336,26 @@ export type StaffLinks = {
 
 export function startMatch(matchId: string) {
   return api<{
-    match: { id: string; status: string; phase: string | null };
+    match: { id: string; status: string; phase: string | null; game_server_id?: string | null };
     mode: string;
     note: string;
     already_live: boolean;
   }>(`/api/v1/matches/${encodeURIComponent(matchId)}/start`, {
     method: 'POST',
+  });
+}
+
+export function startMatchLive(matchId: string, opts?: { serverId?: string }) {
+  return api<{
+    match: { id: string; status: string; phase: string | null; game_server_id?: string | null };
+    mode: string;
+    note: string;
+    already_live: boolean;
+    bridge_config?: Record<string, unknown>;
+    load_match?: { ack_status: string | null; error: string | null; note?: string } | null;
+  }>(`/api/v1/matches/${encodeURIComponent(matchId)}/start-live`, {
+    method: 'POST',
+    body: JSON.stringify({ server_id: opts?.serverId ?? null }),
   });
 }
 
@@ -298,11 +366,55 @@ export function createStaffLinks(matchId: string) {
   );
 }
 
-export function getMatchPublic(matchId: string) {
-  return api<{ id: string; status: string; phase: string | null }>(
-    `/api/v1/matches/${encodeURIComponent(matchId)}`,
-    { token: null },
+/** OBS WHIP: Server = whip_url, Bearer token = bearer (organizer auth). */
+export type WhipPublishCredentials = {
+  path: string;
+  bearer: string;
+  ttl: number;
+  expires_at: string;
+  whip_url: string;
+};
+
+export function fetchWhipPublish(matchId: string) {
+  return api<WhipPublishCredentials>(
+    `/api/v1/matches/${encodeURIComponent(matchId)}/whip-publish`,
+    { method: 'POST' },
   );
+}
+
+export function getMatchPublic(matchId: string) {
+  return api<{
+    id: string;
+    status: string;
+    phase: string | null;
+    score: { team_a: number; team_b: number };
+    round: number;
+  }>(`/api/v1/matches/${encodeURIComponent(matchId)}`, { token: null });
+}
+
+export function syncMatchScoreboard(
+  matchId: string,
+  body: {
+    from_server?: boolean;
+    score_team_a?: number;
+    score_team_b?: number;
+    round?: number;
+  } = { from_server: true },
+) {
+  return api<{
+    match: {
+      id: string;
+      status: string;
+      score: { team_a: number; team_b: number };
+      round: number;
+      phase?: string;
+    };
+    note: string;
+    source?: string;
+  }>(`/api/v1/matches/${encodeURIComponent(matchId)}/score-sync`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
 
 export function getBranding(tournamentId: string) {
@@ -345,6 +457,20 @@ export function getMatch(matchId: string) {
 export function getProduction(matchId: string) {
   return api<ProductionPublic>(
     `/api/v1/matches/${encodeURIComponent(matchId)}/production`,
+    { token: null },
+  );
+}
+
+export function getMatchHealth(matchId: string) {
+  return api<MatchHealth>(
+    `/api/v1/matches/${encodeURIComponent(matchId)}/health`,
+    { token: null },
+  );
+}
+
+export function getMatchAudit(matchId: string, limit = 50) {
+  return api<{ items: AuditEntry[] }>(
+    `/api/v1/matches/${encodeURIComponent(matchId)}/audit?limit=${limit}`,
     { token: null },
   );
 }

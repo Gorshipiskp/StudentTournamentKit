@@ -108,13 +108,13 @@ export function resolveReview(
 export function reviewStatusLabel(status: string): string {
   switch (status) {
     case 'none':
-      return 'Проверки нет';
+      return 'Проверки нет — матч идёт';
     case 'requested':
-      return 'Проверка запрошена — ждём паузу';
+      return 'Проверка запрошена — ждём паузу на закупке';
     case 'pause_pending':
-      return 'Пауза готовится';
+      return 'Пауза готовится на сервере';
     case 'paused':
-      return 'Техническая пауза';
+      return 'Техническая пауза — нужно решение';
     case 'resolved':
       return 'Проверка завершена';
     case 'cancelled':
@@ -122,4 +122,62 @@ export function reviewStatusLabel(status: string): string {
     default:
       return status;
   }
+}
+
+export function matchStatusLabel(status: string): string {
+  switch (status) {
+    case 'live':
+      return 'Идёт';
+    case 'pending':
+    case 'created':
+    case 'ready':
+      return 'Ожидает старта';
+    case 'completed':
+      return 'Завершён';
+    case 'forfeited':
+      return 'Тех. поражение';
+    case 'cancelled':
+      return 'Отменён';
+    default:
+      return status;
+  }
+}
+
+/** What the judge should do right now (short RU). */
+export function reviewActionHint(status: string, matchStatus: string): string {
+  if (matchStatus === 'completed' || matchStatus === 'forfeited') {
+    return 'Матч уже закончен — новые проверки не нужны.';
+  }
+  switch (status) {
+    case 'none':
+    case 'cancelled':
+    case 'resolved':
+      return 'Если нужен разбор — нажмите «Запросить проверку».';
+    case 'requested':
+      return 'Пауза включится на закупке следующего раунда. Можно отменить, пока пауза не началась.';
+    case 'pause_pending':
+      return 'Подождите — сервер подтверждает паузу. Кнопки появятся сами.';
+    case 'paused':
+      return 'Выберите: продолжить матч или выдать техническое поражение.';
+    default:
+      return '';
+  }
+}
+
+export function humanApiError(raw: string): string {
+  const t = raw.trim();
+  if (/401|unauthorized|invalid.?token|expired/i.test(t)) {
+    return 'Ссылка устарела или уже использована. Попросите у организатора новую.';
+  }
+  if (/403|forbidden/i.test(t)) {
+    return 'Нет прав для этого действия. Нужна ссылка судьи, не комментатора.';
+  }
+  if (/409|conflict|version/i.test(t)) {
+    return 'Состояние матча изменилось. Обновите экран и попробуйте снова.';
+  }
+  if (/404/i.test(t)) {
+    return 'Матч не найден. Проверьте ссылку у организатора.';
+  }
+  if (t.length > 160) return t.slice(0, 160) + '…';
+  return t || 'Неизвестная ошибка';
 }

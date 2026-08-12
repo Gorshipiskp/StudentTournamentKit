@@ -94,7 +94,7 @@ def test_branding_upload_overlay_and_public_logo(client: TestClient) -> None:
     ov = client.get(f"/api/v1/matches/{mid}/overlay")
     assert ov.status_code == 200, ov.text
     branding = ov.json()["data"]["branding"]
-    assert branding["logo_url"] == f"/api/v1/tournaments/{tid}/branding/logo"
+    assert branding["logo_url"].startswith(f"/api/v1/tournaments/{tid}/branding/logo?v=")
     assert branding["colors"]["primary"] == "#112233"
     assert ov.json()["data"]["watermark"]["visible"] is True
 

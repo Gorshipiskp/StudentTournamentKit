@@ -362,3 +362,28 @@ class BracketNode(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+
+class MatchAuditLog(Base):
+    __tablename__ = "match_audit_log"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    match_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("matches.id"),
+        nullable=False,
+        index=True,
+    )
+    tournament_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    actor_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    result: Mapped[str] = mapped_column(String(32), nullable=False, default="ok")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

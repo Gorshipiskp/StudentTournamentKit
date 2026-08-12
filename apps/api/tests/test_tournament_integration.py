@@ -121,3 +121,34 @@ def test_fake_match_create_unaffected(client: TestClient) -> None:
     )
     assert r.status_code == 200, r.text
     assert r.json()["id"] == match_id
+
+
+def test_match_get_exposes_broadcast_delay_hint(client: TestClient) -> None:
+    """Director reads configured_broadcast_delay_seconds from tournament (TZ006 P1)."""
+    token = _login(client)
+    created = client.post(
+        "/api/v1/tournaments",
+        headers=_auth(token),
+        json={
+            "name": f"DelayCup {uuid4().hex[:6]}",
+            "settings": {"configured_broadcast_delay_seconds": 105},
+        },
+    )
+    assert created.status_code == 200, created.text
+    tid = created.json()["id"]
+    mid = f"m_delay_{uuid4().hex[:6]}"
+    match = client.post(
+        "/api/v1/matches",
+        json={
+            "match_id": mid,
+            "tournament_id": tid,
+            "game_server_id": "srv_delay",
+            "map_name": "de_mirage",
+        },
+    )
+    assert match.status_code == 200, match.text
+    got = client.get(f"/api/v1/matches/{mid}")
+    assert got.status_code == 200
+    body = got.json()
+    assert body["tournament_id"] == tid
+    assert body["configured_broadcast_delay_seconds"] == 105

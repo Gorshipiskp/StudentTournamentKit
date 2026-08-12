@@ -31,6 +31,29 @@ describe('parseOverlaySnapshot', () => {
     expect(snap.data.watermark.visible).toBe(true);
   });
 
+  it('parses tournament_name and branding', () => {
+    const snap = parseOverlaySnapshot({
+      protocol: 1,
+      type: 'overlay.snapshot',
+      match_id: 'm_1',
+      version: 3,
+      data: {
+        scene: 'intro',
+        team_a: { name: 'Alpha', score: 0 },
+        team_b: { name: 'Beta', score: 0 },
+        tournament_name: 'Spring Cup',
+        watermark: { text: 'STP', visible: true },
+        branding: {
+          logo_url: '/api/v1/tournaments/t1/branding/logo',
+          bg_url: null,
+          colors: { primary: '#112233' },
+        },
+      },
+    });
+    expect(snap.data.tournament_name).toBe('Spring Cup');
+    expect(snap.data.branding?.colors.primary).toBe('#112233');
+  });
+
   it('forces watermark.visible true', () => {
     const snap = parseOverlaySnapshot({
       protocol: 1,
@@ -51,6 +74,31 @@ describe('parseOverlaySnapshot', () => {
     expect(() =>
       parseOverlaySnapshot({ protocol: 1, type: 'patch', version: 1, data: {} }),
     ).toThrow(SnapshotParseError);
+  });
+
+  it('parses optional fx block', () => {
+    const snap = parseOverlaySnapshot({
+      protocol: 1,
+      type: 'overlay.snapshot',
+      match_id: 'm_1',
+      version: 4,
+      data: {
+        scene: 'ingame',
+        team_a: { name: 'A', score: 1 },
+        team_b: { name: 'B', score: 0 },
+        watermark: { text: 'STP', visible: true },
+        fx: {
+          kind: 'bomb_planted',
+          at: '2026-08-12T12:00:00.000Z',
+          ttl_ms: 45000,
+          seq: 9,
+          label: 'Бомба заложена',
+          timer_sec: 40,
+        },
+      },
+    });
+    expect(snap.data.fx?.kind).toBe('bomb_planted');
+    expect(snap.data.fx?.timer_sec).toBe(40);
   });
 
   it('emptyOverlaySnapshot has waiting scene', () => {

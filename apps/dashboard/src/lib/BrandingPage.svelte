@@ -9,18 +9,27 @@
     type BrandingPublic,
     type TournamentPublic,
   } from './api';
-  import WizardNav from './WizardNav.svelte';
+  import AdminShell from './AdminShell.svelte';
+  import AdminStepper from './AdminStepper.svelte';
+  import { humanApiError, toastErr, toastOk } from './toast';
 
   let { tournamentId }: { tournamentId: string } = $props();
 
   let tournament = $state<TournamentPublic | null>(null);
   let branding = $state<BrandingPublic | null>(null);
-  let primary = $state('#3d9a86');
-  let accent = $state('#c9a227');
+  let primary = $state('#d4a84b');
+  let accent = $state('#b45309');
   let logoFile = $state<File | null>(null);
-  let error = $state<string | null>(null);
-  let msg = $state<string | null>(null);
+  let logoPreview = $state<string | null>(null);
+  let logoInput = $state<HTMLInputElement | null>(null);
   let busy = $state(false);
+
+  let logoSrc = $derived.by(() => {
+    if (logoPreview) return logoPreview;
+    if (!branding?.has_logo) return null;
+    const v = branding.logo_version || '1';
+    return `/api/v1/tournaments/${encodeURIComponent(tournamentId)}/branding/logo?v=${encodeURIComponent(v)}`;
+  });
 
   onMount(() => {
     if (!getOrganizerToken()) {
@@ -31,7 +40,6 @@
   });
 
   async function reload() {
-    error = null;
     try {
       tournament = await getTournament(tournamentId);
       branding = await getBranding(tournamentId);
@@ -44,201 +52,188 @@
         window.location.href = '/admin';
         return;
       }
-      error = text;
+      toastErr(humanApiError(text));
     }
+  }
+
+  function onFile(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    logoFile = file;
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    logoPreview = file ? URL.createObjectURL(file) : null;
   }
 
   async function onSave(e: Event) {
     e.preventDefault();
     busy = true;
-    msg = null;
     try {
       branding = await uploadBranding(tournamentId, {
         colors: { primary, accent },
         logo: logoFile,
       });
       logoFile = null;
-      msg = 'Брендинг сохранён — overlay обновит лого/цвета';
+      if (logoPreview) {
+        URL.revokeObjectURL(logoPreview);
+        logoPreview = null;
+      }
+      if (logoInput) logoInput.value = '';
+      toastOk('Оформление сохранено — overlay подхватит цвета и лого');
       await reload();
     } catch (err) {
-      msg = err instanceof Error ? err.message : String(err);
+      toastErr(humanApiError(err instanceof Error ? err.message : String(err)));
     } finally {
       busy = false;
     }
   }
 </script>
 
-<main class="admin">
-  <header class="head">
-    <div>
-      <p class="brand">StudentTournamentKit</p>
-      <h1>Брендинг</h1>
-      {#if tournament}
-        <p class="sub">{tournament.name}</p>
-      {/if}
-    </div>
-  </header>
+<AdminShell
+  title="Оформление"
+  subtitle="Необязательно — лого и цвета эфира"
+  tournamentName={tournament?.name ?? null}
+  {tournamentId}
+  current="branding"
+>
+  {#snippet footer()}
+    <a class="btn btn-ghost" href={`/admin/tournaments/${encodeURIComponent(tournamentId)}`}
+      >Команды</a
+    >
+    <a class="btn btn-primary" href={`/admin/tournaments/${encodeURIComponent(tournamentId)}/bracket`}
+      >К сетке →</a
+    >
+  {/snippet}
 
-  <WizardNav {tournamentId} current="branding" />
+  <AdminStepper {tournamentId} current="branding" tournamentName={tournament?.name ?? null} />
 
-  {#if error}
-    <p class="err">{error}</p>
-  {/if}
-  {#if msg}
-    <p class="ok">{msg}</p>
-  {/if}
-
-  <section class="panel callout">
-    <p>
-      Логотип и цвета видны в эфирном overlay. Шаг необязательный — можно пропустить и вернуться
-      к <a href={`/admin/tournaments/${encodeURIComponent(tournamentId)}/bracket`}>сетке</a>.
-    </p>
-  </section>
-
-  <section class="panel">
-    <h2>Логотип и цвета</h2>
-    <p class="hint">Лого ≤ 2 МБ (PNG/JPEG/WebP). Цвета попадут в эфирный overlay.</p>
-    <form class="form" onsubmit={onSave}>
-      <label>
-        Основной цвет
-        <input type="color" bind:value={primary} />
-        <input type="text" bind:value={primary} maxlength="7" />
-      </label>
-      <label>
-        Акцент
-        <input type="color" bind:value={accent} />
-        <input type="text" bind:value={accent} maxlength="7" />
-      </label>
-      <label>
-        Логотип
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
-          onchange={(e) => {
-            const input = e.currentTarget as HTMLInputElement;
-            logoFile = input.files?.[0] || null;
-          }}
-        />
-      </label>
-      {#if branding?.has_logo}
-        <p class="hint">
-          Текущее лого:
-          <img
-            class="preview"
-            src={`/api/v1/tournaments/${encodeURIComponent(tournamentId)}/branding/logo`}
-            alt="logo"
+  <div class="grid">
+    <section class="surface">
+      <h2 class="display">Логотип и цвета</h2>
+      <form class="form" onsubmit={onSave}>
+        <label class="field">
+          Основной цвет
+          <div class="color-row">
+            <input type="color" bind:value={primary} />
+            <input type="text" bind:value={primary} maxlength="7" />
+          </div>
+        </label>
+        <label class="field">
+          Акцент
+          <div class="color-row">
+            <input type="color" bind:value={accent} />
+            <input type="text" bind:value={accent} maxlength="7" />
+          </div>
+        </label>
+        <label class="field">
+          Логотип
+          <input
+            bind:this={logoInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onchange={onFile}
           />
-        </p>
-      {/if}
-      <button type="submit" disabled={busy}>Сохранить</button>
-    </form>
-  </section>
-</main>
+        </label>
+        <button type="submit" class="btn btn-primary" disabled={busy}>
+          {busy ? 'Сохраняем…' : 'Сохранить'}
+        </button>
+      </form>
+      <details class="more">
+        <summary class="muted">Форматы</summary>
+        <p class="hint muted">PNG, JPEG или WebP до 2 МБ.</p>
+      </details>
+    </section>
+
+    <section class="surface preview-card">
+      <h2 class="display">Превью</h2>
+      <div class="preview" style={`--p:${primary};--a:${accent}`}>
+        <div class="bar"></div>
+        <div class="body">
+          {#if logoSrc}
+            <img src={logoSrc} alt="Логотип турнира" />
+          {:else}
+            <span class="muted">Лого пока нет</span>
+          {/if}
+          <p class="sample">{tournament?.name || 'Название турнира'}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</AdminShell>
 
 <style>
-  .admin {
-    max-width: 42rem;
-    margin: 0 auto;
-    padding: 2rem 1.25rem 3rem;
-  }
-  .head {
-    display: flex;
-    justify-content: space-between;
+  .grid {
+    display: grid;
     gap: 1rem;
-    margin-bottom: 0.75rem;
   }
-  .brand {
-    margin: 0;
-    color: var(--accent);
-    font-size: 0.85rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  h1 {
-    margin: 0.2rem 0 0;
-    font-size: 1.6rem;
-  }
-  .sub {
-    margin: 0.25rem 0 0;
-    color: var(--muted);
+  @media (min-width: 800px) {
+    .grid {
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: start;
+    }
   }
   h2 {
-    margin: 0 0 0.75rem;
-    font-size: 1.1rem;
+    margin: 0 0 0.55rem;
+    font-size: 1.15rem;
   }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1.1rem 1.2rem;
+  .more {
+    margin-top: 0.85rem;
+  }
+  .more summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+  }
+  .hint {
+    margin: 0.45rem 0 0;
+    font-size: 0.88rem;
   }
   .form {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.9rem;
   }
-  label {
+  .color-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    color: var(--muted);
-    font-size: 0.9rem;
+    gap: 0.5rem;
+    align-items: center;
   }
-  input[type='text'],
-  input[type='file'] {
-    background: var(--bg);
+  .color-row input[type='color'] {
+    width: 3rem;
+    height: var(--touch);
+    padding: 0.2rem;
     border: 1px solid var(--border);
-    color: var(--ink);
-    border-radius: 4px;
-    padding: 0.45rem 0.55rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
   }
-  button {
-    background: var(--accent);
-    color: #0b1210;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    align-self: flex-start;
-  }
-  button:disabled {
-    opacity: 0.55;
-  }
-  a.ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.5rem 0.9rem;
-    text-decoration: none;
-    font-weight: 500;
-  }
-  .hint {
-    color: var(--muted);
-    font-size: 0.92rem;
-  }
-  .err {
-    color: var(--danger);
-  }
-  .ok {
-    color: var(--ok);
+  .color-row input[type='text'] {
+    flex: 1;
   }
   .preview {
-    display: block;
-    margin-top: 0.4rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #111827;
+    color: #f8fafc;
+    min-height: 12rem;
+  }
+  .bar {
+    height: 8px;
+    background: linear-gradient(90deg, var(--p), var(--a));
+  }
+  .body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .body img {
     max-height: 64px;
     max-width: 160px;
     object-fit: contain;
-    background: #0003;
-    border-radius: 4px;
   }
-  .callout p {
+  .sample {
     margin: 0;
-    line-height: 1.45;
-  }
-  .callout a {
-    color: var(--accent);
-    font-weight: 600;
+    font-weight: 650;
+    color: var(--p);
   }
 </style>

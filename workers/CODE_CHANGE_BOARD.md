@@ -8,6 +8,234 @@
 
 ## Ожидают обработки
 
+### 2026-08-12 — Admin UI simplify @developer
+
+- **Пакеты:** `apps/dashboard` Admin* / Teams / Bracket / Branding / MatchOps; alpha/organizer
+- **Суть:** action-first organizer UX; fold secondary; mobile stepper only
+- **tech-overview:** systems/dashboard-admin
+
+### 2026-08-12 — Overlay CS2 live FX @developer
+
+- **Пакеты:** STK.Bridge 0.3.0; api live_fx/ingest; overlay EventFx; CONTRACT
+- **Суть:** bomb + round_win chrome on overlay via `data.fx`
+- **tech-overview:** systems/overlay + game-bridge
+
+### 2026-08-12 — BMM ui-tokens all frontends @developer
+
+- **Пакеты:** `packages/ui-tokens`; dashboard/judge/overlay Vite alias + app.css
+- **Суть:** near-black · bone · amber · Sora; OBS canvas transparent
+- **tech-overview:** systems/ui-tokens
+
+### 2026-08-12 — Overlay UI restyle P1–P4 @developer
+
+- **Пакеты:** `apps/overlay` scenes/WatchPage/App; OVERLAY-UI-OWNER-SMOKE; alpha/director
+- **Суть:** campus broadcast look; BrandMark; denser HUD; ScoreFlash; `?debug=1`
+- **tech-overview:** systems/overlay
+
+### 2026-08-12 — Admin UI redesign @developer
+
+- **Пакеты:** `apps/dashboard` admin pages + shell/toast/dialog
+- **Суть:** human labels, light ops UX, no prompt/confirm
+- **tech-overview:** systems/dashboard-admin
+
+### 2026-08-12 — TZ010 P6 gate_ready @developer
+
+- **Пакеты:** `scripts/verify.ps1` TZ010; OWNER-SMOKE gate_ready; tasks/010
+- **Суть:** Fake VERIFY OK; production_ready ждёт @owner
+- **tech-overview:** systems/ops-runbooks
+
+### 2026-08-12 — TZ010 P5 second tournament @developer
+
+- **Пакеты:** `TZ010-OWNER-SMOKE.md` draft; hub checklist; ROADMAP note
+- **Суть:** F6 owner path; verify artifacts listed for P6
+- **tech-overview:** systems/ops-runbooks
+
+### 2026-08-12 — TZ010 P4 update @developer
+
+- **Пакеты:** `docs/UPDATE.md`; pointers hub/scripts/infra
+- **Суть:** воспроизводимый git pull path; profiles explicit
+- **tech-overview:** systems/ops-runbooks
+
+### 2026-08-12 — TZ010 P3 recovery @developer
+
+- **Пакеты:** `docs/PRODUCTION-RECOVERY.md`; pointers hub/ARCH/INVARIANTS/director; docstring B
+- **Суть:** human recovery; Failure B already Go (no Agent redesign)
+- **tech-overview:** systems/ops-runbooks
+
+### 2026-08-12 — TZ010 P2 hub @developer
+
+- **Пакеты:** `docs/PRODUCTION-RUNBOOK.md`; pointers ALPHA/ROADMAP/alpha/*
+- **Суть:** один вход день матча + 2-й турнир; без дублей кликов
+- **tech-overview:** systems/ops-runbooks
+
+### 2026-08-12 — TZ010 P1 RECON @developer
+
+- **Пакеты:** `TZ010-RECON.md`; tasks/010 in_progress
+- **Суть:** gaps → P2–P6; Failure B = done in Agent tests (docs in P3)
+- **tech-overview:** systems/ops-runbooks (когда появится)
+
+### 2026-08-12 — TZ011 P6 gate_ready @developer
+
+- **Пакеты:** `scripts/verify.ps1` TZ011; TZ011-OWNER-SMOKE final; tasks/011 gate_ready; ROADMAP/ALPHA-LIVE notes
+- **Суть:** Fake VERIFY OK; live_whip=done после @owner WHIP smoke
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ011 P5 docs/scripts @developer
+
+- **Пакеты:** ALPHA-LIVE, director.md, Agent/templates README, live-cs2-local/dev-remote, TZ011-OWNER-SMOKE, get_match_health whip
+- **Суть:** канон без FFmpeg/VC; скрипты не стартуют live-webrtc; smoke draft
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ011 P4 /watch WHEP @developer
+
+- **Пакеты:** `apps/overlay` whepClient, WatchPage, watchAuth media mode, README
+- **Суть:** live `/watch` через WHEP; Fake/mock сохранены; статус без publisher = WHIP waiting
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ011 P3 credentials API @developer
+
+- **Пакеты:** `mediamtx_credentials.py`, `whep_sessions.py`, `routers/whip.py`, `.env.example`, tests
+- **Суть:** Platform выдаёт WHIP/WHEP URL+bearer; лимит 2 WHEP; MediaMTX authHTTP callback
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ011 P2 ADR + CONTRACT @developer
+
+- **Пакеты:** `docs/DECISIONS.md` ADR-037; `docs/WEBRTC-CONTRACT.md` dual-mode; TECH-STACK §4.1; ARCHITECTURE §13
+- **Суть:** live = WHIP/MediaMTX/WHEP; Fake = protocol 1; credentials shape для P3
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ011 P1 MediaMTX spike @developer
+
+- **Пакеты:** `infra/mediamtx/` (+ spike whep.html); compose profile `whip`; `.env.example` MEDIAMTX_*; TZ011-SPIKE; ADR-037-DRAFT
+- **Суть:** MediaMTX на Platform skeleton; lab WHEP OK; live-канон to-be WHIP→MTX→WHEP (Fake без MTX)
+- **tech-overview:** systems/webrtc-whip (когда появится)
+
+### 2026-08-12 — TZ009 P6 gate_ready @developer
+
+- **Пакеты:** `TZ009-OWNER-SMOKE.md` final; tasks/009 gate_ready; ALPHA-LIVE/ROADMAP notes
+- **Суть:** волна P1–P6 закрыта для кода; live_cs2_local=done после @owner DS smoke (F5)
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ009 P5 verify Fake @developer
+
+- **Пакеты:** `scripts/verify.ps1` TZ009 banner + artifacts; scripts/README
+- **Суть:** VERIFY OK без CS2 DS; Fake path зелёный
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ009 P4 docs + OWNER-SMOKE draft @developer
+
+- **Пакеты:** `TZ009-OWNER-SMOKE.md`; LOCAL-CS2-DS § Live-матч; ALPHA-LIVE-TRACKS §1; organizer.md
+- **Суть:** owner может пройти live_cs2_local по докам; GATE close = P6 после smoke
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ009 P3 live start path @developer
+
+- **Пакеты:** `start_match.py` start_match_live; matches `POST …/start-live`; MatchOps + api.ts; game-server README
+- **Суть:** матч live без Fake после register/assign; Fake `/start` сохранён
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ009 P2 Bridge CSS events @developer
+
+- **Пакеты:** `infra/game-server/plugins/STK.Bridge` 0.2.0 (`EventRoundStart`/`End` → `round_*`; `GameScoreReader`; webhook warn-логи); deploy LOCAL-CS2
+- **Суть:** GATE event path с DS без fork MatchZy; live smoke ждёт рестарт DS @owner
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ009 opened @developer
+
+- **Пакеты:** tasks/009_LIVE-CS2-LOCAL; TZ009-PROMPT-RUNBOOK M=6; NEW-CHAT; Production Ready → TZ010
+- **Суть:** Live CS2 Local wave; Bridge skeleton → webhooks; Fake CI сохранён
+- **tech-overview:** systems/live-cs2 (когда появится)
+
+### 2026-08-12 — TZ008 GATE closed @owner/@developer
+
+- **Пакеты:** tasks/008 done; `live_webrtc=done`; encode bump `live_track.go` 1080p/3500k; TZ004 optional closed
+- **Суть:** Real OBS + live WebRTC принят @owner; качество улучшено post-GATE; next TZ009
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ008 P5 gate_ready @developer
+
+- **Пакеты:** `TZ008-OWNER-SMOKE.md`; tasks/008 gate_ready; ALPHA-LIVE-TRACKS; verify footer
+- **Суть:** VERIFY OK; VCam frame OK; `/watch` E2E отложен (Docker Desktop down) → @owner; не TZ009 close
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ008 P4 tests + verify @developer
+
+- **Пакеты:** `verify.ps1` TZ008 artifacts; `TestFakeTrackRunBrief`; live_track unit
+- **Суть:** VERIFY OK без OBS; live_webrtc owner smoke = P5
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ008 P2 live publisher @developer
+
+- **Пакеты:** `webrtc/live_track.go`, `cmd/agent` `--live-webrtc` / `--webrtc-device` / `--webrtc-ffmpeg`
+- **Суть:** FFmpeg dshow OBS Virtual Camera → VP8 IVF → Pion; Fake path unchanged
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ008 P1 contract + spike @developer
+
+- **Пакеты:** `docs/WEBRTC-CONTRACT.md` § Live; `webrtc/README.md`; Agent README §4c
+- **Суть:** device `OBS Virtual Camera` confirmed; flags draft; capture impl = P2
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ008 Live WebRTC opened @developer
+
+- **Пакеты:** `tasks/008_LIVE-WEBRTC.md`, `TZ008-PROMPT-RUNBOOK.md`, `TZ008-NEW-CHAT.md`; ROADMAP/ALPHA-LIVE-TRACKS; Production Ready → TZ009
+- **Суть:** OBS Virtual Cam → Agent → `/watch`; Fake остаётся CI; закрыть `live_webrtc=blocked`
+- **tech-overview:** systems/live-webrtc (когда появится)
+
+### 2026-08-12 — TZ007 P1–P6 gate_ready @developer
+
+- **Пакеты:** `docs/ALPHA-RUNBOOK.md`, `docs/ALPHA-LIVE-TRACKS.md`, `docs/alpha/*`, `scripts/alpha-dry-run.ps1`, `verify.ps1` TZ007, `TZ007-OWNER-SMOKE.md`
+- **Суть:** Tournament Alpha Fake gate_ready; live_*=blocked; @owner smoke/post-mortem pending; next TZ008
+- **tech-overview:** systems/tournament-alpha (когда появится)
+
+### 2026-08-12 — S007 closed / TZ007 opened @team-lead
+
+- **Пакеты:** `tasks/007_TOURNAMENT-ALPHA.md`, `TZ007-PROMPT-RUNBOOK.md`, sprint S008
+- **Суть:** Broadcast GATE closed; Alpha E2E runbooks + dry-run
+- **tech-overview:** systems/tournament-alpha (когда появится)
+
+### 2026-08-12 — TZ006 GATE closed @developer
+
+- **Пакеты:** verify.ps1 TZ006, TZ006-OWNER-SMOKE, tasks/006 done, ROADMAP этап 5
+- **Суть:** Broadcast Primary GATE Fake OBS; live_twitch=blocked; next TZ007
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P6 audit UI @developer
+
+- **Пакеты:** DirectorPage audit list; GET `/audit` public read; README + BROADCAST-HEALTH
+- **Суть:** RU журнал действий; refresh после scene/override
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P5 director health UI @developer
+
+- **Пакеты:** `apps/dashboard` DirectorPage health panel + getMatchHealth
+- **Суть:** poll health + delay checklist; RU empty states agent/OBS offline
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P4 match health @developer
+
+- **Пакеты:** `GET /matches/{id}/health`, `get_match_health.py`, `docs/BROADCAST-HEALTH.md`
+- **Суть:** aggregate HEALTHY/DEGRADED/OFFLINE/UNKNOWN; Fake OBS path
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P3 match_audit_log @developer
+
+- **Пакеты:** alembic 0013, `write_audit`, GET `/matches/{id}/audit`, writers на judge/director/organizer/system
+- **Суть:** A10 audit trail; correlation_id; ≥5 action types
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P2 overlay scenes @developer
+
+- **Пакеты:** `apps/overlay/src/lib/scenes/*`, merge `tournament_name`, OVERLAY-CONTRACT
+- **Суть:** 6 semi-pro layouts + branding; watermark STP сохранён
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
+### 2026-08-12 — TZ006 P1 delay checklist @developer
+
+- **Пакеты:** `docs/BROADCAST-DELAY.md`, `apps/dashboard` DirectorPage, `GET /matches` delay hint
+- **Суть:** OBS Stream Delay v1 contract + director RU checklist; F7 desired not verified
+- **tech-overview:** systems/broadcast-slice (когда появится)
+
 ### 2026-08-12 — S006 closed / TZ006 opened @team-lead
 
 - **Пакеты:** `tasks/006_BROADCAST-SLICE.md`, `TZ006-PROMPT-RUNBOOK.md`, sprint S007

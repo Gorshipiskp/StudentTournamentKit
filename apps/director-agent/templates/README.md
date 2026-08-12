@@ -46,15 +46,19 @@ Agent — **единственный**, кто ходит в OBS (инвариа
 
 ## 3. Stream Delay (Twitch) — чек-лист v1
 
-Задержка публичного эфира = **OBS Stream Delay**, не FFmpeg в Agent (ADR-024 v1).
+Задержка публичного эфира = **OBS Stream Delay**, не FFmpeg в Agent (ADR-024 v1).  
+Контракт для режиссёра/продукта: [`docs/BROADCAST-DELAY.md`](../../../docs/BROADCAST-DELAY.md).
 
 - [ ] Настройки → **Дополнительно** → **Задержка трансляции (Stream Delay)**
 - [ ] Значение ~ **90–120 с** (как в настройках турнира / продукте)
-- [ ] Virtual Camera / превью для комментаторов **без** этой задержки (если используете)
-- [ ] Проверить, что Twitch stream key введён в OBS → Настройки → Трансляция
+- [ ] Комментаторы **без** этой задержки: OBS **WHIP** → MediaMTX → `/watch` (канон TZ011)  
+      ([Agent README §4d](../README.md) · [director.md](../../../docs/alpha/director.md) · [WEBRTC-CONTRACT](../../../docs/WEBRTC-CONTRACT.md))
+- [ ] Legacy Virtual Cam + `--live-webrtc` — **не** использовать на матч-день
+- [ ] Проверить, что Twitch stream key введён в OBS → Настройки → Трансляция (отдельный выход от WHIP)
 - [ ] Пробный выход в сеть / запись — убедиться, что delay включён
 
-Agent **не** выставляет delay автоматически в v1.
+Agent **не** выставляет delay автоматически в v1.  
+**Не путать:** Stream Delay = только Twitch; WHIP → `/watch` идёт **без** этой задержки.
 
 ---
 

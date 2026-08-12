@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import TracebackType
 from typing import Any, Self
 
 from app.domain.demo.entities import DemoFile
 from app.domain.game_server.entities import GameServer
 from app.domain.identity.entities import InviteToken
+from app.domain.audit.entities import MatchAuditEntry
 from app.domain.match.entities import Match
 from app.domain.match.game_command import GameCommand
 from app.domain.overlay.entities import OverlayState
@@ -231,9 +232,12 @@ class InMemoryOverlayStateRepository:
         return self.items.get(match_id)
 
     def add(self, state: OverlayState) -> None:
+        if state.updated_at is None:
+            state.updated_at = datetime.now(UTC)
         self.items[state.match_id] = state
 
     def save(self, state: OverlayState) -> None:
+        state.updated_at = datetime.now(UTC)
         self.items[state.match_id] = state
 
 
@@ -292,6 +296,30 @@ class InMemoryInviteTokenRepository:
         self.by_hash[invite.token_hash] = invite.id
 
 
+class InMemoryMatchAuditLogRepository:
+    def __init__(self) -> None:
+        self.items: dict[str, MatchAuditEntry] = {}
+        self._seq = 0
+
+    def add(self, entry: MatchAuditEntry) -> None:
+        self._seq += 1
+        if entry.created_at is None:
+            entry.created_at = datetime(2026, 1, 1, tzinfo=UTC) + timedelta(
+                microseconds=self._seq
+            )
+        self.items[entry.id] = entry
+
+    def list_for_match(
+        self,
+        match_id: str,
+        *,
+        limit: int = 50,
+    ) -> list[MatchAuditEntry]:
+        rows = [e for e in self.items.values() if e.match_id == match_id]
+        rows.sort(key=lambda e: e.created_at or datetime.min.replace(tzinfo=UTC), reverse=True)
+        return rows[: max(1, min(limit, 200))]
+
+
 class InMemoryUnitOfWork:
     def __init__(self) -> None:
         self.tournaments = InMemoryTournamentRepository()
@@ -308,6 +336,7 @@ class InMemoryUnitOfWork:
         self.production = InMemoryProductionSessionRepository()
         self.invites = InMemoryInviteTokenRepository()
         self.outbox = InMemoryOutboxRepository()
+        self.audit = InMemoryMatchAuditLogRepository()
         self.committed = False
 
     def __enter__(self) -> Self:

@@ -1,0 +1,66 @@
+###############################################
+# STK MediaMTX v1.12.x — WHIP publish / WHEP play (TZ011)
+#
+# Path канон: stk/<matchId>
+#   WHIP:  http(s)://<host>:8889/stk/<matchId>/whip
+#   WHEP:  http(s)://<host>:8889/stk/<matchId>/whep
+#   UI:    http(s)://<host>:8889/stk/<matchId>
+#          http(s)://<host>:8889/stk/<matchId>/publish
+#
+# Spike / local: auth open (any). P3 — JWT/bearer через Platform API.
+# VPS: set MTX_WEBRTCADDITIONALHOSTS / MEDIAMTX_WEBRTC_ADDITIONAL_HOSTS.
+###############################################
+
+logLevel: info
+logDestinations: [stdout]
+
+authMethod: internal
+# Production (P3+): switch to HTTP callback so bearers from Platform are enforced:
+# authMethod: http
+# authHTTPAddress: http://host.docker.internal:8000/api/v1/internal/mediamtx-auth
+# (or http://api:8000/... when MediaMTX shares compose network with api)
+authInternalUsers:
+  # Spike open: publish/read/api from any IP. P3 tightens with JWT/bearer.
+  - user: any
+    pass:
+    ips: []
+    permissions:
+      - action: publish
+        path:
+      - action: read
+        path:
+      - action: playback
+        path:
+      - action: api
+      - action: metrics
+      - action: pprof
+
+api: yes
+apiAddress: :9997
+apiAllowOrigin: "*"
+
+rtsp: yes
+rtspAddress: :8554
+rtmp: no
+hls: no
+srt: no
+playback: no
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
+webrtcAllowOrigin: "*"
+webrtcLocalUDPAddress: :8189
+# webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: yes
+webrtcIPsFromInterfacesList: []
+# Prefer env MTX_WEBRTCADDITIONALHOSTS=1.2.3.4,example.org in compose.
+webrtcAdditionalHosts: []
+# webrtcICEServers2:
+#   - url: turn:TURN_HOST:3478?transport=udp
+#     username: AUTH_SECRET
+#     password: <same as TURN_SECRET>
+
+paths:
+  "~^stk/.+$":
+  all_others:

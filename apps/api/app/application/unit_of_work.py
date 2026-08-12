@@ -8,6 +8,7 @@ from typing import Protocol, Self
 from app.domain.demo.ports import DemoFileRepository
 from app.domain.game_server.ports import GameServerRepository
 from app.domain.identity.ports import InviteTokenRepository
+from app.domain.audit.ports import MatchAuditLogRepository
 from app.domain.match.ports import (
     GameCommandRepository,
     GameEventRepository,
@@ -37,6 +38,7 @@ class UnitOfWork(Protocol):
     production: ProductionSessionRepository
     invites: InviteTokenRepository
     outbox: OutboxRepository
+    audit: MatchAuditLogRepository
 
     def __enter__(self) -> Self: ...
 

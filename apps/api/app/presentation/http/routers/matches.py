@@ -19,10 +19,16 @@ from app.application.commands.judge_review import (
     request_review,
     resolve_review,
 )
-from app.application.commands.reconcile_match import reconcile_match_from_snapshot
 from app.application.commands.rebuild_overlay import apply_overlay_override, get_overlay_message
+from app.application.commands.apply_overlay_fx import apply_overlay_fx
 from app.application.commands.staff_links import create_match_staff_links
-from app.application.commands.start_match import MatchStartError, start_match_fake
+from app.application.commands.start_match import (
+    MatchStartError,
+    start_match_fake,
+    start_match_live,
+)
+from app.application.commands.sync_match_scoreboard import sync_match_scoreboard
+from app.application.commands.get_match_health import get_match_health
 from app.application.commands.update_production import (
     ProductionConflict,
     get_production,
@@ -66,6 +72,17 @@ class ResolveBody(BaseModel):
 
 class AssignServerBody(BaseModel):
     server_id: str
+    force: bool = Field(
+        default=False,
+        description="Steal server from another match (local smoke / rebind)",
+    )
+
+
+class StartLiveBody(BaseModel):
+    server_id: str | None = Field(
+        default=None,
+        description="Optional game-server id; auto-picks srv_local / free Bridge if omitted",
+    )
 
 
 class ProductionPatchBody(BaseModel):
@@ -83,6 +100,32 @@ class OverlayOverrideBody(BaseModel):
     judge_banner: str | None = None
     clear: bool = False
 
+
+class OverlayFxBody(BaseModel):
+    """Lab / director: inject ephemeral overlay FX (round win, bomb, …)."""
+
+    kind: str | None = Field(
+        default=None,
+        description="round_win | bomb_planted | bomb_defusing | bomb_defused | bomb_exploded",
+    )
+    side: str | None = Field(default=None, description="team_a|team_b|ct|t for round_win")
+    site: int | None = None
+    round: int | None = Field(default=None, ge=0)
+    timer_sec: int | None = Field(default=None, ge=1)
+    has_kit: bool | None = None
+    clear: bool = False
+
+
+class ScoreSyncBody(BaseModel):
+    """Organizer force scoreboard: from CS2 server (default) or manual values."""
+
+    from_server: bool = Field(
+        default=True,
+        description="True = GetSnapshot с игрового сервера; False = поля ниже",
+    )
+    score_team_a: int | None = Field(default=None, ge=0)
+    score_team_b: int | None = Field(default=None, ge=0)
+    round: int | None = Field(default=None, ge=0)
 
 @router.post("")
 def post_match(body: CreateMatchBody) -> dict[str, Any]:
@@ -106,14 +149,24 @@ def post_match(body: CreateMatchBody) -> dict[str, Any]:
 def get_match(match_id: str) -> dict[str, Any]:
     with SqlAlchemyUnitOfWork() as uow:
         match = uow.matches.get(match_id)
-    if match is None:
-        raise HTTPException(status_code=404, detail="match not found")
-    return match.to_public_dict()
+        if match is None:
+            raise HTTPException(status_code=404, detail="match not found")
+        pub = match.to_public_dict()
+        tournament = uow.tournaments.get(match.tournament_id)
+        delay = None
+        if tournament is not None:
+            raw = tournament.settings_json.get("configured_broadcast_delay_seconds")
+            if isinstance(raw, (int, float)):
+                delay = int(raw)
+            elif isinstance(raw, str) and raw.strip().isdigit():
+                delay = int(raw.strip())
+        pub["configured_broadcast_delay_seconds"] = delay
+        return pub
 
 
 @router.post("/{match_id}/start")
 def post_match_start(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
-    """Fake/admin start — marks match live without CS2 VPS (TZ005 P5)."""
+    """Fake/admin start — marks match live without CS2 DS (CI / Alpha)."""
     try:
         with SqlAlchemyUnitOfWork() as uow:
             result = start_match_fake(
@@ -131,6 +184,45 @@ def post_match_start(match_id: str, _session: RequireOrganizer) -> dict[str, Any
     return result
 
 
+@router.post("/{match_id}/start-live")
+def post_match_start_live(
+    match_id: str,
+    _session: RequireOrganizer,
+    body: StartLiveBody = StartLiveBody(),
+) -> dict[str, Any]:
+    """Live start — Bridge/DS (auto-assign srv_local if match has no real server). TZ009."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = start_match_live(
+                uow,
+                match_id=match_id,
+                server_id=body.server_id,
+                correlation_id=get_correlation_id() or None,
+            )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except MatchStartError as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    except ProductionConflict as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    dispatch_pending()
+    return result
+
+
+@router.get("/{match_id}/audit")
+def get_match_audit(
+    match_id: str,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """Match audit trail (newest first). Public read for director panel."""
+    with SqlAlchemyUnitOfWork() as uow:
+        match = uow.matches.get(match_id)
+        if match is None:
+            raise HTTPException(status_code=404, detail="match not found")
+        items = uow.audit.list_for_match(match_id, limit=limit)
+    return {"items": [e.to_public_dict() for e in items]}
+
+
 @router.post("/{match_id}/staff-links")
 def post_staff_links(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
     """Create judge + commentator invites and deep-link URLs for organizer."""
@@ -146,6 +238,18 @@ def get_match_production(match_id: str) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
             body = get_production(uow, match_id=match_id)
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return body
+
+
+@router.get("/{match_id}/health")
+def get_match_health_endpoint(match_id: str) -> dict[str, Any]:
+    """Match component health aggregate (platform/agent/obs/overlay/game/broadcast)."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            body = get_match_health(uow, match_id=match_id)
             uow.commit()
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -209,8 +313,61 @@ def post_overlay_override(
     return message
 
 
+@router.post("/{match_id}/overlay/fx")
+def post_overlay_fx(match_id: str, body: OverlayFxBody) -> dict[str, Any]:
+    """Inject or clear ephemeral FX on overlay (lab / smoke). Pushes via WS."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            message = apply_overlay_fx(
+                uow,
+                match_id=match_id,
+                kind=body.kind,
+                side=body.side,
+                site=body.site,
+                round_number=body.round,
+                timer_sec=body.timer_sec,
+                has_kit=body.has_kit,
+                clear=body.clear,
+                correlation_id=get_correlation_id() or None,
+            )
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    dispatch_pending()
+    return message
+
+
+@router.post("/{match_id}/score-sync")
+def post_score_sync(
+    match_id: str,
+    body: ScoreSyncBody,
+    _session: RequireOrganizer,
+) -> dict[str, Any]:
+    """Organizer: pull score/round from CS2 (default) or set manually; push overlay."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = sync_match_scoreboard(
+                uow,
+                match_id=match_id,
+                from_server=body.from_server,
+                score_team_a=body.score_team_a,
+                score_team_b=body.score_team_b,
+                round_number=body.round,
+                correlation_id=get_correlation_id() or None,
+            )
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    dispatch_pending()
+    return result
+
+
 @router.get("/{match_id}/snapshot")
-def get_match_platform_snapshot(match_id: str) -> dict[str, Any]:
+def get_match_platform_snapshot(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
     """Platform view of match (not live CS2 snapshot)."""
     with SqlAlchemyUnitOfWork() as uow:
         match = uow.matches.get(match_id)
@@ -232,7 +389,7 @@ def get_match_platform_snapshot(match_id: str) -> dict[str, Any]:
 
 
 @router.get("/{match_id}/demos")
-def get_match_demos(match_id: str) -> dict[str, Any]:
+def get_match_demos(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
     with SqlAlchemyUnitOfWork() as uow:
         match = uow.matches.get(match_id)
         if match is None:
@@ -242,11 +399,18 @@ def get_match_demos(match_id: str) -> dict[str, Any]:
 
 
 @router.post("/{match_id}/assign-server")
-def post_assign_server(match_id: str, body: AssignServerBody) -> dict[str, Any]:
+def post_assign_server(
+    match_id: str,
+    body: AssignServerBody,
+    _session: RequireOrganizer,
+) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
             match = assign_server_to_match(
-                uow, match_id=match_id, server_id=body.server_id
+                uow,
+                match_id=match_id,
+                server_id=body.server_id,
+                force=body.force,
             )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -256,16 +420,23 @@ def post_assign_server(match_id: str, body: AssignServerBody) -> dict[str, Any]:
 
 
 @router.post("/{match_id}/reconcile")
-def post_reconcile(match_id: str) -> dict[str, Any]:
+def post_reconcile(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
+    """Same as score-sync from_server: GetSnapshot + overlay rebuild."""
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            return reconcile_match_from_snapshot(
+            result = sync_match_scoreboard(
                 uow,
                 match_id=match_id,
+                from_server=True,
                 correlation_id=get_correlation_id() or None,
             )
+            uow.commit()
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    dispatch_pending()
+    return result
 
 
 def _issue(match_id: str, command_type: str, body: CommandBody) -> dict[str, Any]:
@@ -318,7 +489,11 @@ def post_review_request(
 ) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            match = request_review(uow, match_id=match_id)
+            match = request_review(
+                uow,
+                match_id=match_id,
+                correlation_id=get_correlation_id() or None,
+            )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except JudgeConflict as exc:

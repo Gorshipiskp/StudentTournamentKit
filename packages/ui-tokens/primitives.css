@@ -1,0 +1,213 @@
+/* Shared UI primitives — BestMomentsMaker-aligned */
+
+.muted {
+  color: var(--text-muted);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--touch);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--ease),
+    background var(--ease),
+    color var(--ease),
+    transform var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: rgba(255, 248, 235, 0.22);
+  background: var(--bg-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--cta);
+  border-color: var(--cta);
+  color: var(--cta-text);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f7f1e6;
+  border-color: #f7f1e6;
+}
+
+.btn-ghost,
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover:not(:disabled),
+.btn.ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: rgba(255, 248, 235, 0.22);
+  background: var(--bg-hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border-strong));
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-muted);
+}
+
+.btn-warn {
+  background: transparent;
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 40%, var(--border-strong));
+}
+
+.btn-warn:hover:not(:disabled) {
+  background: var(--warn-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.field label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.field input,
+.field select,
+.field textarea {
+  min-height: var(--touch);
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  transition: border-color var(--ease), background var(--ease);
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  border-color: var(--border-strong);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent-line);
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.panel,
+.surface {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 1.2rem 1.3rem;
+}
+
+.panel h2,
+.surface h2 {
+  margin: 0 0 1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.badge-draft {
+  color: var(--text-dim);
+}
+
+.badge-published,
+.badge-live {
+  color: var(--ok);
+  background: var(--ok-muted);
+  border-color: color-mix(in srgb, var(--ok) 30%, transparent);
+}
+
+.badge-completed {
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.badge-idle {
+  color: var(--text-muted);
+}
+
+.callout {
+  border-left: 2px solid var(--accent);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left-width: 2px;
+  border-left-color: var(--accent);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+}
+
+.callout-ok {
+  border-left-color: var(--ok);
+}
+
+.callout-warn {
+  border-left-color: var(--warn);
+  background: var(--warn-muted);
+}
+
+.callout-danger {
+  border-left-color: var(--danger);
+  background: var(--danger-muted);
+}

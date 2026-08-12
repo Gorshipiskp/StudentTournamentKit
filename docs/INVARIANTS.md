@@ -386,7 +386,8 @@ reachable ✓  heartbeat ✓  events ✓  command_ack ✓  state_sync ✓
 | D | Out-of-order webhook |
 | E | Judge resolve race with round event |
 
-Если A–E проходят — архитектура существует в runtime, не только на диаграмме.
+Если A–E проходят — архитектура существует в runtime, не только на диаграмме.  
+Человеческий runbook: [PRODUCTION-RECOVERY.md](PRODUCTION-RECOVERY.md).
 
 ---
 

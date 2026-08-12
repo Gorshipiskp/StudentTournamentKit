@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import {
+    humanApiError,
     redeemInvite,
     resolveInviteToken,
     type JudgeSession,
@@ -15,7 +16,7 @@
     const token = resolveInviteToken(window.location.search);
     if (!token) {
       bootError =
-        'Нет ссылки-приглашения. Откройте URL с параметром ?token=…';
+        'Нет ссылки-приглашения. Откройте URL, который прислал организатор (с параметром ?token=…).';
       loading = false;
       return;
     }
@@ -26,12 +27,12 @@
         const redeemed = await redeemInvite(token);
         if (cancelled) return;
         if (redeemed.role !== 'judge') {
-          bootError = 'Эта ссылка не для судьи.';
+          bootError = 'Эта ссылка не для судьи. Попросите у организатора ссылку судьи.';
           loading = false;
           return;
         }
         if (!redeemed.caps.includes('judge.review')) {
-          bootError = 'У приглашения нет прав судьи.';
+          bootError = 'У приглашения нет прав судьи. Нужна новая ссылка от организатора.';
           loading = false;
           return;
         }
@@ -44,8 +45,9 @@
         loading = false;
       } catch (e) {
         if (cancelled) return;
-        bootError =
-          e instanceof Error ? e.message : 'Не удалось войти по приглашению';
+        bootError = humanApiError(
+          e instanceof Error ? e.message : 'Не удалось войти по приглашению',
+        );
         loading = false;
       }
     })();
@@ -58,12 +60,20 @@
 
 {#if loading}
   <main class="boot">
-    <p>Вход по приглашению…</p>
+    <span class="mark">STK</span>
+    <h1 class="display">Судья</h1>
+    <p class="muted">Входим по приглашению…</p>
+    <div class="bar" aria-hidden="true"></div>
   </main>
 {:else if bootError}
   <main class="boot deny">
-    <h1>Доступ закрыт</h1>
-    <p>{bootError}</p>
+    <span class="mark warn">!</span>
+    <h1 class="display">Доступ закрыт</h1>
+    <p class="muted">{bootError}</p>
+    <p class="tip muted">
+      Не пересылайте ссылку зрителям. Если протухла — попросите организатора выдать новую из
+      «Ссылки для команды».
+    </p>
   </main>
 {:else if session}
   <JudgePage {session} />
@@ -71,17 +81,59 @@
 
 <style>
   .boot {
-    max-width: 28rem;
+    max-width: 26rem;
     margin: 0 auto;
-    padding: 3rem 1.25rem;
+    padding: 3.5rem 1.35rem 2rem;
     text-align: center;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
-  .deny h1 {
-    font-size: 1.5rem;
-    margin: 0 0 0.75rem;
+  .mark {
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius);
+    background: var(--cta);
+    color: var(--cta-text);
+    font-weight: 800;
   }
-  .deny p {
-    color: var(--muted);
+  .mark.warn {
+    background: var(--danger);
+    font-size: 1.4rem;
+  }
+  h1 {
+    margin: 0 0 0.65rem;
+    font-size: 1.75rem;
+  }
+  p {
+    margin: 0;
     line-height: 1.45;
+    max-width: 22rem;
+  }
+  .tip {
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .bar {
+    margin-top: 1.5rem;
+    width: 8rem;
+    height: 4px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    background-size: 200% 100%;
+    animation: slide 1.1s linear infinite;
+  }
+  @keyframes slide {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
   }
 </style>

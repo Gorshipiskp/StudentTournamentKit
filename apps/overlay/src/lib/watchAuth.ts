@@ -1,4 +1,4 @@
-/** Commentator watch — invite resolve + redeem + TURN. */
+/** Commentator watch — invite resolve + redeem + TURN / WHEP. */
 
 export type RedeemResult = {
   access_token: string;
@@ -15,6 +15,17 @@ export type TurnCredentials = {
   ttl: number;
   expires_at: string;
 };
+
+export type WhepPlayCredentials = {
+  path: string;
+  whep_url: string;
+  bearer: string;
+  ttl: number;
+  expires_at: string;
+};
+
+/** protocol 2 live | protocol 1 fake | local canvas */
+export type MediaMode = 'whep' | 'fake' | 'mock';
 
 /**
  * Invite raw token from `/watch/{token}` or `?token=` / `?invite=`.
@@ -40,6 +51,23 @@ export function isWatchPath(pathname: string): boolean {
 export function isMockWatch(search: string): boolean {
   const q = new URLSearchParams(search);
   return q.get('mock') === '1' || q.get('mock') === 'true';
+}
+
+/**
+ * Resolve media bootstrap mode.
+ * - `?mock=1` → mock
+ * - `?media=fake|whep|mock` → explicit
+ * - default → **whep** (TZ011 live canon); Fake rehearsals use `?media=fake`
+ */
+export function resolveMediaMode(search: string): MediaMode {
+  if (isMockWatch(search)) return 'mock';
+  const q = new URLSearchParams(search);
+  const raw = (q.get('media') || '').trim().toLowerCase();
+  if (raw === 'fake' || raw === 'whep' || raw === 'mock') return raw;
+  const env = (import.meta as ImportMeta & { env?: Record<string, string> }).env
+    ?.VITE_WATCH_MEDIA_MODE;
+  if (env === 'fake' || env === 'whep' || env === 'mock') return env;
+  return 'whep';
 }
 
 async function api<T>(
@@ -82,6 +110,13 @@ export function fetchTurnCredentials(matchId: string, accessToken: string) {
   );
 }
 
+export function fetchWhepPlay(matchId: string, accessToken: string) {
+  return api<WhepPlayCredentials>(
+    `/api/v1/matches/${encodeURIComponent(matchId)}/whep-play`,
+    { method: 'POST', accessToken },
+  );
+}
+
 export function bannerLabel(banner: string | null | undefined): string | null {
   if (!banner) return null;
   switch (banner) {
@@ -96,5 +131,68 @@ export function bannerLabel(banner: string | null | undefined): string | null {
   }
 }
 
-/** Architectural limit: Platform allows max 2 concurrent /watch signaling subscribers. */
+/** Architectural limit: max 2 concurrent WHEP credentials / Fake signaling subscribers. */
 export const MAX_WATCH_SUBSCRIBERS = 2;
+
+export function humanWatchError(raw: string): string {
+  const t = raw.trim();
+  if (/401|unauthorized|invalid.?token|expired/i.test(t)) {
+    return 'Ссылка устарела или уже использована. Попросите у организатора новую.';
+  }
+  if (/403|forbidden/i.test(t)) {
+    return 'Нет доступа к эфиру. Нужна ссылка комментатора, не судьи.';
+  }
+  if (/429|too many|максимум 2|max(imum)?\s*2|whep limit/i.test(t)) {
+    return 'Уже смотрят двое по разным ссылкам. Закройте лишнюю вкладку или попросите новую ссылку.';
+  }
+  if (/404/i.test(t)) {
+    return 'Матч или эфир не найден. Проверьте ссылку у организатора.';
+  }
+  if (t.length > 180) return t.slice(0, 180) + '…';
+  return t || 'Неизвестная ошибка';
+}
+
+export function mediaStatusLabel(status: string): string {
+  switch (status) {
+    case 'live':
+    case 'mock':
+      return 'В эфире';
+    case 'waiting_offer':
+    case 'waiting_publisher':
+      return 'Ждём картинку';
+    case 'connecting':
+    case 'negotiating':
+      return 'Подключаемся…';
+    case 'closed':
+      return 'Отключено';
+    case 'error':
+      return 'Ошибка';
+    default:
+      return status;
+  }
+}
+
+export function mediaModeHint(mode: MediaMode): string | null {
+  if (mode === 'fake') return 'Репетиция (тестовый канал)';
+  if (mode === 'mock') return 'Демо-картинка';
+  return null;
+}
+
+export function sceneLabel(scene: string | null | undefined): string {
+  switch (scene) {
+    case 'waiting':
+      return 'Ожидание';
+    case 'intro':
+      return 'Интро';
+    case 'teams':
+      return 'Команды';
+    case 'ingame':
+      return 'Игра';
+    case 'break':
+      return 'Перерыв';
+    case 'winner':
+      return 'Победитель';
+    default:
+      return scene || '—';
+  }
+}

@@ -30,10 +30,20 @@ Every WS frame and `GET /api/v1/matches/{matchId}/overlay` body:
     "paused": false,
     "judge": { "status": "none", "banner": null },
     "watermark": { "text": "STP", "visible": true },
+    "tournament_name": "Spring Cup",
+    "fx": {
+      "kind": "bomb_planted",
+      "at": "2026-08-12T20:00:00.000Z",
+      "ttl_ms": 45000,
+      "seq": 12,
+      "label": "Бомба заложена",
+      "timer_sec": 40,
+      "site": 0
+    },
     "branding": {
       "logo_url": "/api/v1/tournaments/{id}/branding/logo",
       "bg_url": null,
-      "colors": { "primary": "#3d9a86", "accent": "#c9a227" }
+      "colors": { "primary": "#d4a84b", "accent": "#efe8da" }
     }
   }
 }
@@ -43,7 +53,9 @@ Every WS frame and `GET /api/v1/matches/{matchId}/overlay` body:
 |-------|--------|
 | `version` | Per-match `overlay_revision`, monotonic, DB-backed. Bumps on merge (score/status/scene/override). |
 | `type` | Always `overlay.snapshot` (full state). |
+| `tournament_name` | Optional. From tournament row; used on intro/teams/break/winner/waiting layouts. |
 | `branding` | Optional (TZ005). `logo_url` / `bg_url` are same-origin API paths; watermark always remains. |
+| `data.fx` | Optional ephemeral chrome from CS2 (`bomb_*`, `round_win`, `round_start`). Client hides after `ttl_ms` from `at`. |
 | `data.scene` | Layout key from production **desired** scene (director). |
 | `data.team_*`.score | From match game view (Fake/CS2), unless temporary manual override. |
 | `data.watermark.visible` | Always `true` — no client flag to hide (F4). |

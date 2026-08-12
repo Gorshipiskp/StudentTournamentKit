@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |------|----------|
-| **Статус** | **done** (GATE 2026-08-12; live_webrtc=blocked) |
+| **Статус** | **done** (GATE 2026-08-12; `live_webrtc=done` via TZ008) |
 | **Owner** | @team-lead / @owner |
 | **Исполнитель** | developer (+ devops coturn при блокере) |
 | **Этап roadmap** | 3 — People Slice |
@@ -102,8 +102,8 @@
 
 ### Optional live
 
-- [ ] Agent publisher с OBS Virtual Cam на ноутбуке владельца
-- [x] Статус: `live_webrtc=blocked`
+- [x] Agent publisher с OBS Virtual Cam → `/watch` — **TZ008 done** ([008_LIVE-WEBRTC.md](008_LIVE-WEBRTC.md))
+- [x] Статус: `live_webrtc=done` (2026-08-12 @owner)
 
 ---
 

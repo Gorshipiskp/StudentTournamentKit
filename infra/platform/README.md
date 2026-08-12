@@ -1,13 +1,18 @@
 # infra/platform — Deploy платформы
 
 Docker Compose для локальной/dev платформы: **api**, **mysql:8**, **nginx**.  
-**coturn** — optional profile `webrtc` (People Slice / TZ004; не нужен для Foundation GATE).
+**coturn** — optional profile `webrtc` (People Slice / TZ004; не нужен для Foundation GATE).  
+**mediamtx** — optional profile `whip` (TZ011 OBS WHIP → WHEP; не нужен для Fake CI / `verify.ps1`).
+
+**Обновление стенда после `git pull`:** [docs/UPDATE.md](../../docs/UPDATE.md) · день матча: [docs/PRODUCTION-RUNBOOK.md](../../docs/PRODUCTION-RUNBOOK.md).
 
 ```powershell
 docker compose --env-file .env -f infra/platform/docker-compose.yml --profile webrtc up -d
+docker compose --env-file .env -f infra/platform/docker-compose.yml --profile whip up -d mediamtx
 ```
 
 TURN env: `TURN_HOST`, `TURN_PORT`, `TURN_SECRET`, `TURN_TTL_SECONDS`, `TURN_REALM` (см. `.env.example`).  
+MediaMTX env: `MEDIAMTX_PUBLIC_URL`, `MEDIAMTX_API_URL`, `MEDIAMTX_WEBRTC_ADDITIONAL_HOSTS` — [infra/mediamtx/README.md](../mediamtx/README.md).  
 API: `POST /api/v1/matches/{id}/turn-credentials` · signaling: `/ws/signaling/{id}` — [docs/WEBRTC-CONTRACT.md](../../docs/WEBRTC-CONTRACT.md).
 
 ## Рабочая MySQL (owner, 2026-08-11)
@@ -65,6 +70,9 @@ curl http://127.0.0.1:8000/ready
 | nginx | 80 | **8080** (`NGINX_HTTP_PORT`) |
 | api (uvicorn) | 8000 | **8000** (`API_PUBLISH_PORT`) |
 | mysql (локальный compose) | 3306 | **3307** (`MYSQL_PUBLISH_PORT`; 3306 часто занят на хосте) |
+| mediamtx WHIP/WHEP (profile `whip`) | 8889 | **8889** (`MEDIAMTX_WEBRTC_PORT`) |
+| mediamtx ICE UDP | 8189 | **8189** (`MEDIAMTX_ICE_UDP_PORT`) |
+| mediamtx API | 9997 | **9997** (`MEDIAMTX_API_PORT`) |
 
 ## Быстрый старт
 

@@ -104,7 +104,7 @@ export function connectWatchSubscriber(opts: Opts): SubscriberHandles {
   ws.onclose = (ev) => {
     if (closed) return;
     if (ev.code === 4429) {
-      opts.onError('Уже открыто максимум 2 вкладки комментатора');
+      opts.onError('Уже открыто максимум 2 вкладки комментатора на этот матч');
     } else if (ev.code === 4401) {
       opts.onError('Нет доступа к эфиру (invite)');
     }

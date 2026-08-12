@@ -7,7 +7,14 @@ from uuid import uuid4
 
 from app.application.commands.issue_match_command import issue_match_command
 from app.application.commands.rebuild_overlay import rebuild_overlay_snapshot
+from app.application.commands.write_audit import write_audit
 from app.application.unit_of_work import UnitOfWork
+from app.domain.audit.entities import (
+    ACTION_JUDGE_FORFEIT,
+    ACTION_JUDGE_REVIEW_REQUEST,
+    ACTION_JUDGE_REVIEW_RESOLVE,
+    ACTOR_JUDGE,
+)
 from app.domain.match.entities import (
     MATCH_CANCELLED,
     MATCH_COMPLETED,
@@ -52,7 +59,12 @@ class JudgeConflict(Exception):
         self.message = message
 
 
-def request_review(uow: UnitOfWork, *, match_id: str) -> Match:
+def request_review(
+    uow: UnitOfWork,
+    *,
+    match_id: str,
+    correlation_id: str | None = None,
+) -> Match:
     match = _require_match(uow, match_id)
     if match.status in _TERMINAL_MATCH:
         raise JudgeConflict("match already finished")
@@ -71,6 +83,15 @@ def request_review(uow: UnitOfWork, *, match_id: str) -> Match:
     match.review_resolution = None
     match.version += 1
     uow.matches.save(match)
+    write_audit(
+        uow,
+        match_id=match.id,
+        action=ACTION_JUDGE_REVIEW_REQUEST,
+        actor_type=ACTOR_JUDGE,
+        tournament_id=match.tournament_id,
+        payload={"review_status": match.review_status, "version": match.version},
+        correlation_id=correlation_id,
+    )
     _notify_review(uow, match, JUDGE_REVIEW_REQUESTED)
     uow.commit()
     return match
@@ -129,6 +150,15 @@ def resolve_review(
         match.review_resolution = RESOLUTION_CONTINUE
         match.version += 1
         uow.matches.save(match)
+        write_audit(
+            uow,
+            match_id=match.id,
+            action=ACTION_JUDGE_REVIEW_RESOLVE,
+            actor_type=ACTOR_JUDGE,
+            tournament_id=match.tournament_id,
+            payload={"action": action, "version": match.version},
+            correlation_id=correlation_id,
+        )
         _notify_review(uow, match, JUDGE_REVIEW_RESOLVED)
         uow.commit()
     else:
@@ -149,6 +179,15 @@ def resolve_review(
         match.review_resolution = RESOLUTION_FORFEIT
         match.version += 1
         uow.matches.save(match)
+        write_audit(
+            uow,
+            match_id=match.id,
+            action=ACTION_JUDGE_FORFEIT,
+            actor_type=ACTOR_JUDGE,
+            tournament_id=match.tournament_id,
+            payload={"action": action, "losing_team": losing_team, "version": match.version},
+            correlation_id=correlation_id,
+        )
         _notify_review(uow, match, JUDGE_REVIEW_RESOLVED)
         uow.commit()
 

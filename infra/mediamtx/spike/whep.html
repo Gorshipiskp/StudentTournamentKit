@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STK WHEP spike (TZ011)</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 1.5rem; background: #111; color: #eee; }
+    label { display: block; margin: 0.5rem 0 0.25rem; font-size: 0.85rem; opacity: 0.8; }
+    input { width: min(48rem, 100%); padding: 0.4rem 0.5rem; }
+    button { margin: 0.75rem 0.5rem 0.75rem 0; padding: 0.45rem 0.9rem; cursor: pointer; }
+    video { width: min(960px, 100%); background: #000; aspect-ratio: 16/9; display: block; margin-top: 1rem; }
+    #log { white-space: pre-wrap; font: 12px/1.4 ui-monospace, monospace; opacity: 0.85; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>WHEP spike</h1>
+  <p>MediaMTX path → WHEP. Default: <code>stk/m_spike</code>.</p>
+  <label for="whepUrl">WHEP URL</label>
+  <input id="whepUrl" value="http://127.0.0.1:8889/stk/m_spike/whep" />
+  <label for="bearer">Bearer (optional; empty for open spike)</label>
+  <input id="bearer" value="" placeholder="leave empty for local spike" />
+  <div>
+    <button type="button" id="play">Play</button>
+    <button type="button" id="stop">Stop</button>
+  </div>
+  <video id="video" autoplay playsinline controls muted></video>
+  <div id="log"></div>
+  <script>
+    const logEl = document.getElementById("log");
+    const video = document.getElementById("video");
+    let pc = null;
+    let resourceUrl = null;
+
+    function log(msg) {
+      logEl.textContent += msg + "\n";
+    }
+
+    async function stop() {
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      if (resourceUrl) {
+        try {
+          await fetch(resourceUrl, { method: "DELETE" });
+        } catch (_) {}
+        resourceUrl = null;
+      }
+      video.srcObject = null;
+    }
+
+    async function play() {
+      await stop();
+      logEl.textContent = "";
+      const whepUrl = document.getElementById("whepUrl").value.trim();
+      const bearer = document.getElementById("bearer").value.trim();
+      pc = new RTCPeerConnection();
+      pc.addTransceiver("video", { direction: "recvonly" });
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      pc.ontrack = (ev) => {
+        video.srcObject = ev.streams[0];
+        log("track: " + ev.track.kind);
+      };
+      pc.oniceconnectionstatechange = () => log("ice: " + pc.iceConnectionState);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await new Promise((resolve) => {
+        if (pc.iceGatheringState === "complete") resolve();
+        else {
+          const t = setTimeout(resolve, 2000);
+          pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === "complete") {
+              clearTimeout(t);
+              resolve();
+            }
+          };
+        }
+      });
+      const headers = { "Content-Type": "application/sdp" };
+      if (bearer) headers["Authorization"] = "Bearer " + bearer;
+      const res = await fetch(whepUrl, {
+        method: "POST",
+        headers,
+        body: pc.localDescription.sdp,
+      });
+      if (!res.ok) {
+        log("WHEP POST failed: " + res.status + " " + (await res.text()));
+        return;
+      }
+      resourceUrl = res.headers.get("Location");
+      if (resourceUrl && !resourceUrl.startsWith("http")) {
+        resourceUrl = new URL(resourceUrl, whepUrl).toString();
+      }
+      const answer = await res.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answer });
+      log("WHEP OK; Location=" + (resourceUrl || "(none)"));
+    }
+
+    document.getElementById("play").onclick = () => play().catch((e) => log(String(e)));
+    document.getElementById("stop").onclick = () => stop().catch((e) => log(String(e)));
+  </script>
+</body>
+</html>

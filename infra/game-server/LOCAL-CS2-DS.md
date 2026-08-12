@@ -147,16 +147,41 @@ cd "Z:\cs2_dedicated_server\steamapps\common\Counter-Strike Global Offensive\gam
 
 ---
 
+## Live-матч на этом DS (пошагово, TZ009)
+
+**Предпочтительно одной командой** (из корня репо):
+
+```powershell
+.\scripts\live-cs2-local.ps1
+```
+
+Скрипт сам: `.env` → API → матч → game-server → assign → start-live → `config.json` Bridge.  
+Потом: `connect 127.0.0.1:27015` → сыграй раунд (соло + боты ок).
+
+Ручной путь (если скрипт не подходит):
+
+1. **Секреты** — один и тот же `CS2_WEBHOOK_SECRET` в `.env`, в Platform (`POST /game-servers`) и в Bridge `config.json`.
+2. **Запуск DS** — `start-dedicated-competitive.bat`. В логе: MatchZy + `STK.Bridge … version=0.2.0` + `Registered CSS handlers`.
+3. **Проверка Bridge** — браузер/curl: `http://127.0.0.1:27099/health` → `role=stk-bridge`.
+4. **Platform** — зарегистрировать сервер (`endpoint_url=http://127.0.0.1:27099`) → `assign-server` на матч.
+5. **Синхрон config** — в `config.json` выставить `MatchId` / `ServerId` как в Platform → **рестарт DS**.
+6. **Старт** — в админке **Старт на локальном сервере** или `POST /api/v1/matches/{id}/start-live` (не Fake).
+7. **Игра** — `connect 127.0.0.1:27015`, конец раунда → `GET /api/v1/matches/{id}` показывает счёт/раунд.
+
+Чеклист приёмки: [`TZ009-OWNER-SMOKE.md`](../../workers/developer/notes/TZ009-OWNER-SMOKE.md).  
+Краткий API-путь: [`README.md`](./README.md) § Live локальный DS.
+
+---
+
 ## Следующие шаги (оператор)
 
-1. Убедиться, что DS стартует (`start-dedicated.bat` или команда выше).
-2. Установить Metamod → CounterStrikeSharp → MatchZy (без fork) — см. чеклист в [`README.md`](./README.md).
-3. Собрать STK.Bridge (`dotnet build`) и скопировать в `game\csgo\addons\counterstrikesharp\plugins\STK.Bridge\`.
-4. Заполнить `config.json` Bridge: `PlatformUrl`, `WebhookSecret`, `MatchId`, `ServerId`.
-5. Зарегистрировать сервер в Platform: `POST /api/v1/game-servers` + assign match (см. README § Register).
-6. Прогнать live-ветку [`TZ002-OWNER-SMOKE.md`](../../workers/developer/notes/TZ002-OWNER-SMOKE.md) § Live CS2.
+1. Убедиться, что DS стартует (`start-dedicated.bat` / competitive).
+2. Плагины: Metamod → CSS → MatchZy → STK.Bridge **0.2.0+** (`scripts/install-local-cs2-plugins.ps1` или copy DLL).
+3. Заполнить / сверить `config.json` Bridge с матчем на Platform.
+4. Register + assign + **start-live** (см. блок «Live-матч» выше).
+5. Пройти [`TZ009-OWNER-SMOKE.md`](../../workers/developer/notes/TZ009-OWNER-SMOKE.md) → статус `live_cs2_local=done` только @owner.
 
-После успешного smoke обновить статус `live_cs2` в ROADMAP / CURRENT (не автоматически при одной только установке Steam).
+После успешного smoke обновить [ALPHA-LIVE-TRACKS.md](../../docs/ALPHA-LIVE-TRACKS.md) §1 (не автоматически при одной только установке Steam).
 
 ---
 

@@ -689,42 +689,47 @@ Agent на setup: `ImportSceneCollection` via OBS WebSocket.
 
 ## 13. WebRTC и комментаторы
 
-### 13.1 Signaling flow
+> Канон live: **[ADR-037](DECISIONS.md)** OBS WHIP → MediaMTX → WHEP.  
+> Fake/CI: protocol 1 P2P + coturn ([ADR-022](DECISIONS.md), остаётся). Контракт: [WEBRTC-CONTRACT.md](WEBRTC-CONTRACT.md).
+
+### 13.1 Live (protocol 2)
 
 ```mermaid
 sequenceDiagram
-    participant COMM as Commentator Browser
-    participant API as Platform WS
-    participant AGENT as Director Agent
-    participant TURN as coturn
+    participant OBS as OBS WHIP
+    participant MTX as MediaMTX
+    participant API as Platform API
+    participant COMM as /watch WHEP
 
-    COMM->>API: connect /ws (commentator token)
-    AGENT->>API: agent online
-    COMM->>API: signaling.offer
-    API->>AGENT: relay offer
-    AGENT->>API: signaling.answer
-    API->>COMM: relay answer
-    COMM->>TURN: ICE if needed
-    AGENT->>TURN: ICE if needed
-    AGENT-->>COMM: WebRTC video (live, no delay)
+    API->>OBS: whip_url + bearer
+    OBS->>MTX: WHIP publish stk/matchId
+    API->>COMM: whep_url + bearer
+    COMM->>MTX: WHEP play
+    MTX-->>COMM: WebRTC video (live, no Twitch delay)
 ```
 
-### 13.2 Параметры
+### 13.2 Fake / CI (protocol 1)
+
+Signaling WS + Agent `--fake-webrtc` + coturn — без MediaMTX. См. историческую sequence P2P в git history / TZ004 docs; семантика не менялась.
+
+### 13.3 Параметры
 
 | Параметр | Значение |
 |----------|----------|
-| Max commentators | 2 (архитектура допускает 3) |
-| Codec | VP8 или H264 (browser compat first) |
-| Bitrate target | 2–4 Mbps 720p30 |
-| Audio in WebRTC | **Нет** — audio via Voicemeeter → OBS |
-| TURN | coturn на Platform VPS, credentials short-lived |
+| Max commentators | **2** (WHEP credentials / Fake subscribers) |
+| Path | `stk/<matchId>` |
+| Codec (live) | H264 from OBS (browser-compatible) |
+| Audio in WebRTC | **Нет** — Voicemeeter / Discord вне платформы |
+| TURN | coturn — Fake ICE; optional ICE helper for MediaMTX on VPS |
+| MediaMTX | compose profile `whip` |
 
-### 13.3 Почему не SFU
+### 13.4 SFU / media relay
 
-1–2 подписчика, один publisher — **P2P + TURN** проще и дешевле mediasoup/LiveKit.
+- **Fake:** без SFU (P2P + TURN) — ADR-022.  
+- **Live:** MediaMTX на Platform = **осознанный** media relay — ADR-037 (не LiveKit Cloud).  
+- Источник картинки по-прежнему ноут режиссёра (ADR-008).
 
 ---
-
 ## 14. OBS и overlay
 
 ### 14.1 Разделение ответственности
@@ -836,10 +841,15 @@ X-STK-Event-Id: uuid
 
 ### 16.3 Director manual runbook
 
+Человеческая таблица день матча: **[PRODUCTION-RECOVERY.md](PRODUCTION-RECOVERY.md)** (симптом → действие).
+
+Кратко:
+
 1. **Overlay frozen:** refresh Browser Source; check Platform health  
-2. **Agent disconnected:** restart agent; auto-reconcile desired scene  
+2. **Agent disconnected:** restart agent; auto-reconcile desired scene (A12 / Failure B)  
 3. **OBS crash:** reopen OBS; Agent reconnects and reconciles  
 4. **CS2 lag:** dashboard component health (not only heartbeat)  
+5. **WHIP waiting:** Start Streaming in OBS; MediaMTX profile `whip`
 
 ---
 

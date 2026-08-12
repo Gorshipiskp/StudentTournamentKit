@@ -5,6 +5,20 @@ export type OverlayTeam = {
   score: number;
 };
 
+export type OverlayFx = {
+  kind: string;
+  at: string;
+  ttl_ms: number;
+  seq: number;
+  label: string;
+  side?: string | null;
+  site?: string | number | null;
+  timer_sec?: number | null;
+  has_kit?: boolean;
+  reason?: string | null;
+  round?: number | null;
+};
+
 export type OverlayData = {
   scene: string;
   team_a: OverlayTeam;
@@ -16,11 +30,13 @@ export type OverlayData = {
   paused: boolean;
   judge: { status: string; banner: string | null };
   watermark: { text: string; visible: boolean };
+  tournament_name?: string | null;
   branding?: {
     logo_url: string | null;
     bg_url: string | null;
     colors: Record<string, string>;
   };
+  fx?: OverlayFx | null;
 };
 
 export type OverlaySnapshot = {
@@ -93,6 +109,27 @@ export function parseOverlaySnapshot(raw: unknown): OverlaySnapshot {
     };
   }
 
+  let fx: OverlayFx | null = null;
+  if (dataRaw.fx && typeof dataRaw.fx === 'object' && !Array.isArray(dataRaw.fx)) {
+    const f = dataRaw.fx as Record<string, unknown>;
+    if (typeof f.kind === 'string' && typeof f.label === 'string') {
+      fx = {
+        kind: f.kind,
+        at: typeof f.at === 'string' ? f.at : new Date().toISOString(),
+        ttl_ms: typeof f.ttl_ms === 'number' ? f.ttl_ms : Number(f.ttl_ms) || 4000,
+        seq: typeof f.seq === 'number' ? f.seq : Number(f.seq) || 0,
+        label: f.label,
+        side: typeof f.side === 'string' ? f.side : null,
+        site: typeof f.site === 'string' || typeof f.site === 'number' ? f.site : null,
+        timer_sec:
+          typeof f.timer_sec === 'number' ? f.timer_sec : f.timer_sec != null ? Number(f.timer_sec) : null,
+        has_kit: Boolean(f.has_kit),
+        reason: typeof f.reason === 'string' ? f.reason : null,
+        round: typeof f.round === 'number' ? f.round : null,
+      };
+    }
+  }
+
   return {
     protocol,
     type: 'overlay.snapshot',
@@ -116,7 +153,10 @@ export function parseOverlaySnapshot(raw: unknown): OverlaySnapshot {
         text: typeof watermarkRaw.text === 'string' ? watermarkRaw.text : 'STP',
         visible: true,
       },
+      tournament_name:
+        typeof dataRaw.tournament_name === 'string' ? dataRaw.tournament_name : null,
       branding,
+      fx,
     },
   };
 }

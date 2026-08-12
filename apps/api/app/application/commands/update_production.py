@@ -9,7 +9,12 @@ from app.application.commands.rebuild_overlay import (
     rebuild_overlay_snapshot,
     seed_overlay_and_production,
 )
+from app.application.commands.write_audit import write_audit
 from app.application.unit_of_work import UnitOfWork
+from app.domain.audit.entities import (
+    ACTION_DIRECTOR_SCENE_CHANGE,
+    ACTOR_DIRECTOR,
+)
 from app.domain.production.entities import PRODUCTION_DESIRED_CHANGED
 from app.domain.production.messages import (
     ALLOWED_SCENES,
@@ -60,6 +65,7 @@ def patch_production(
         raise ProductionConflict("no fields to patch")
 
     scene_changed = False
+    previous_scene = session.desired_scene
     if desired_scene is not None:
         if desired_scene not in ALLOWED_SCENES:
             raise ProductionConflict(
@@ -92,6 +98,15 @@ def patch_production(
     )
 
     if scene_changed:
+        write_audit(
+            uow,
+            match_id=match_id,
+            action=ACTION_DIRECTOR_SCENE_CHANGE,
+            actor_type=ACTOR_DIRECTOR,
+            tournament_id=match.tournament_id,
+            payload={"from": previous_scene, "to": desired_scene},
+            correlation_id=correlation_id,
+        )
         rebuild_overlay_snapshot(
             uow,
             match,

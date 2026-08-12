@@ -1,32 +1,60 @@
-:root {
-  --bg: #0f1419;
-  --panel: #1a222c;
-  --ink: #e8eef4;
-  --muted: #9aa7b5;
-  --accent: #3d9a86;
-  --accent-hover: #4bb59e;
-  --warn: #c9a227;
-  --danger: #c45c5c;
-  --ok: #5bb86a;
-  --border: #2a3542;
-  --font: "Segoe UI", "Trebuchet MS", sans-serif;
-}
-
-* {
-  box-sizing: border-box;
-}
+@import '@stk/ui-tokens/tokens.css';
+@import '@stk/ui-tokens/primitives.css';
 
 html,
 body,
 #app {
   margin: 0;
   min-height: 100%;
-  background: var(--bg);
-  color: var(--ink);
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Soft stage wash */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -5%, rgba(40, 44, 52, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 95% 5%, rgba(50, 38, 18, 0.12), transparent 50%);
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-app {
+  min-height: 100%;
+  color: var(--text);
   font-family: var(--font);
 }
 
-button,
-input {
-  font: inherit;
+.admin-app .btn {
+  min-height: var(--touch);
+}
+
+.admin-app .surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 1.15rem 1.25rem 1.3rem;
+}
+
+.admin-app .display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }

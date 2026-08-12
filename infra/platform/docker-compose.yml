@@ -94,5 +94,22 @@ services:
       - "--no-multicast-peers"
       - "--no-stdout-timestamps"
 
+  # OBS WHIP → WHEP (TZ011) — optional: docker compose --profile whip up -d mediamtx
+  # Does not replace Fake P2P CI; not required for verify.ps1.
+  mediamtx:
+    profiles: ["whip"]
+    image: bluenviron/mediamtx:1.12.2
+    restart: unless-stopped
+    ports:
+      - "${MEDIAMTX_WEBRTC_PORT:-8889}:8889"
+      - "${MEDIAMTX_ICE_UDP_PORT:-8189}:8189/udp"
+      - "${MEDIAMTX_RTSP_PORT:-8554}:8554"
+      - "${MEDIAMTX_API_PORT:-9997}:9997"
+    environment:
+      # Public IP/DNS for ICE host candidates (LAN or VPS). Comma-separated.
+      MTX_WEBRTCADDITIONALHOSTS: ${MEDIAMTX_WEBRTC_ADDITIONAL_HOSTS:-}
+    volumes:
+      - ../mediamtx/mediamtx.yml:/mediamtx.yml:ro
+
 volumes:
   mysql_data:

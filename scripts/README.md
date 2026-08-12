@@ -2,10 +2,15 @@
 
 Скрипты локальной разработки и проверок StudentTournamentKit.
 
+Операторский день матча: [`docs/PRODUCTION-RUNBOOK.md`](../docs/PRODUCTION-RUNBOOK.md).  
+После `git pull` (migrate, profiles): [`docs/UPDATE.md`](../docs/UPDATE.md).
+
 | Скрипт | Назначение |
 |--------|------------|
-| **`dev-remote.ps1`** | **Dev (remote MySQL):** API + overlay + dashboard + judge + agent (fake-webrtc) |
+| **`live-cs2-local.ps1`** | **Один клик Live CS2:** .env → API → overlay/judge/agent → матч → start-live → Bridge (+ DS) |
+| **`dev-remote.ps1`** | **Dev (remote MySQL):** API + frontends + agent + MediaMTX (WHIP/WHEP) |
 | **`dev-remote.sh`** | То же для bash/WSL |
+| **`alpha-dry-run.ps1`** | **Alpha Fake E2E:** preconditions + `verify.ps1` + human checklist |
 | `verify.ps1` | GATE: pytest, сборки, fake-cs2, go test |
 | `verify.sh` | То же для bash |
 | `deploy-cs2.sh` | CS2 VPS install — **`--dry-run` по умолчанию** |
@@ -14,7 +19,27 @@
 
 Операторский runbook CS2: [`infra/game-server/README.md`](../infra/game-server/README.md).  
 Локальный CS2 DS @owner: [`infra/game-server/LOCAL-CS2-DS.md`](../infra/game-server/LOCAL-CS2-DS.md).  
+**Live матч одной командой:** [`live-cs2-local.ps1`](live-cs2-local.ps1).  
 Live SSH-деплой на VPS — только @owner.
+
+---
+
+## live-cs2-local — Live CS2 без ручной возни
+
+```powershell
+cd C:\BestCSTournaments
+.\scripts\live-cs2-local.ps1
+```
+
+Поднимает API (с корневым `.env`), dashboard, **overlay/watch**, **judge**, **director-agent**, создаёт матч `m_live_cs2`, регистрирует `srv_local`, assign + **start-live**, staff-links, пишет Bridge `config.json` на DS.  
+Дальше: `connect 127.0.0.1:27015` → раунд. Соло с ботами ок. В конце скрипт печатает ссылки судьи и комментатора.
+
+Реальный OBS + **сцены** по умолчанию (видео комментаторам = **OBS WHIP**, не `--live-webrtc`). В `.env` **раскомментируй** и задай:
+`STK_OBS_URL=ws://127.0.0.1:4455` и `STK_OBS_PASSWORD=...`.  
+Без пароля скрипт **не** уходит в silent fake — ошибка (или явный `-AllowFakeAgent` → fake-webrtc + `/watch?media=fake`).  
+После старта скрипт печатает шаги WHIP (`whip-publish` → OBS → `/watch`).
+
+Флаги: `-MatchId`, `-ServerId`, `-SkipDashboard`, `-SkipOverlay`, `-SkipJudge`, `-SkipAgent`, `-SkipDsStart`, `-AllowFakeAgent`, `-ObsPassword`, `-AllowLocalDb`, `-SkipMigrate`.
 
 ---
 
@@ -32,8 +57,10 @@ Live SSH-деплой на VPS — только @owner.
 | Dashboard + `/admin` + `/director` (Vite dev) | `5174` | `apps/dashboard` |
 | Judge (Vite dev) | `5175` | `apps/judge` |
 | Director Agent (optional) | — | `apps/director-agent` (`--fake-obs --fake-webrtc` по умолчанию) |
+| MediaMTX (WHIP/WHEP) | `8889` | Docker Compose `--profile whip` (нужен Docker Desktop) |
 
-**Не поднимает:** Docker Compose, nginx, mysql-контейнер, OBS.  
+**Не поднимает:** nginx, mysql-контейнер, OBS.  
+MediaMTX можно пропустить: `-SkipMediamtx` (тогда `/watch` WHEP даст connection refused — для Fake: `&media=fake`).  
 Vite проксирует `/api` и `/ws` на `:8000` — nginx для dev не нужен.
 
 Перед API: **`alembic upgrade head`** к remote БД (можно `-SkipMigrate`).
@@ -73,7 +100,7 @@ cd C:\BestCSTournaments
 .\scripts\dev-remote.ps1 -MatchId m_live
 ```
 
-Откроются **до 5 окон** PowerShell (API + 3 Vite + Agent). Остановка: **Ctrl+C** в каждом или закрыть окна.
+Откроются **до 5 окон** PowerShell (API + 3 Vite + Agent) и контейнер **MediaMTX** (Docker). Остановка: **Ctrl+C** в каждом окне; MediaMTX — `docker compose ... --profile whip stop mediamtx`.
 
 **Флаги:**
 
@@ -83,6 +110,7 @@ cd C:\BestCSTournaments
 | `-ApiOnly` | только API, без Vite и Agent |
 | `-SkipMigrate` | не запускать alembic |
 | `-SkipAgent` | без окна director-agent |
+| `-SkipMediamtx` | не поднимать MediaMTX (нет WHEP на :8889) |
 | `-ObsPassword "..."` | Agent с реальным OBS WS (без `--fake-obs`) |
 | `-AllowLocalDb` | разрешить `MYSQL_HOST=127.0.0.1` |
 
@@ -95,6 +123,7 @@ http://127.0.0.1:5174/admin
 http://127.0.0.1:5173/overlay/<matchId>
 http://127.0.0.1:5174/director/<matchId>
 http://127.0.0.1:5173/watch?token=<invite>
+http://127.0.0.1:8889/stk/<matchId>/whep   # MediaMTX (если Docker ок)
 http://127.0.0.1:5175/?token=<invite>
 ```
 
@@ -153,4 +182,47 @@ ALLOW_LOCAL_DB=1 ./scripts/dev-remote.sh    # localhost MySQL
 .\scripts\verify.ps1
 ```
 
-Локальный pytest по умолчанию смотрит на compose MySQL `:3307` (см. скрипт). Remote БД для verify не обязательна.
+Локальный pytest по умолчанию смотрит на compose MySQL `:3307` (см. скрипт). Remote БД для verify не обязательна.  
+**TZ011:** Fake CI **без** MediaMTX/OBS; баннер VERIFY OK — TZ011. Owner WHIP — [TZ011-OWNER-SMOKE](../workers/developer/notes/TZ011-OWNER-SMOKE.md).  
+**TZ009:** Fake CI **без** CS2 DS; Live DS — [TZ009-OWNER-SMOKE](../workers/developer/notes/TZ009-OWNER-SMOKE.md).
+**TZ008:** go test включает Fake WebRTC + unit live_track **без** OBS.
+
+---
+
+## alpha-dry-run — репетиция Tournament Alpha (Fake)
+
+**Когда:** перед днём Alpha / приёмкой TZ007.  
+**Что делает автоматически:** проверяет `.env`, артефакты Alpha (runbook + `docs/alpha/*`), опционально миграции, вызывает [`verify.ps1`](verify.ps1).  
+**Что делает владелец руками:** поднять API/UI, admin → 4 команды → Fake-матч → director + Fake OBS → судья → overlay/health/audit (см. вывод скрипта, [`docs/ALPHA-RUNBOOK.md`](../docs/ALPHA-RUNBOOK.md), памятки [`docs/alpha/`](../docs/alpha/)).
+
+**Не делает:** live CS2, живой Twitch, автоматизацию кликов в браузере.
+
+```powershell
+cd C:\BestCSTournaments
+.\scripts\alpha-dry-run.ps1
+.\scripts\alpha-dry-run.ps1 -Migrate              # alembic upgrade head
+.\scripts\alpha-dry-run.ps1 -MatchId m_ff         # подсказка URL
+.\scripts\alpha-dry-run.ps1 -SkipVerify           # только чеклист (не для приёмки)
+```
+
+| Флаг | Эффект |
+|------|--------|
+| `-Migrate` | `alembic upgrade head` в `apps/api` (нужен `.venv` и доступная MySQL) |
+| `-SkipVerify` | не вызывать `verify.ps1` (для отладки шагов; **не** для GATE) |
+| `-MatchId …` | id в подсказках URL (по умолчанию `m_alpha`) |
+
+**Exit code:** ≠ 0 если нет `.env`/артефактов, упал migrate или `verify.ps1`.  
+API down при probe — предупреждение, не провал (стек поднимают руками).
+
+### Итог P4 (gap check, 2026-08-12)
+
+| Находка | Статус |
+|---------|--------|
+| `verify.ps1` / pytest / builds | OK — блокеров нет |
+| Operator guides отсутствуют в precheck | **исправлено** — `docs/alpha/*.md` обязательны |
+| Human steps без ссылок на памятки | **исправлено** |
+| API down на probe | ожидаемо без поднятого стека; не блокер |
+| `verify.ps1` ещё с баннером TZ006 | не блокер Alpha; строка TZ007 — P6 |
+| live_cs2 / live_webrtc / live_twitch | blocked (optional) |
+
+Связанные smokes: TZ002–006 OWNER-SMOKE · чеклист: ALPHA-RUNBOOK · гайды: `docs/alpha/`.

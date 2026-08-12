@@ -13,7 +13,9 @@ from app.application.commands.judge_review import (
     notify_review_status,
 )
 from app.application.commands.rebuild_overlay import rebuild_overlay_snapshot
+from app.application.commands.write_audit import write_audit
 from app.application.unit_of_work import UnitOfWork
+from app.domain.audit.entities import ACTION_SYSTEM_ROUND_END, ACTOR_SYSTEM
 from app.domain.match.apply import apply_game_event
 from app.domain.match.events import (
     MATCH_RECONCILE_NEEDED,
@@ -21,6 +23,7 @@ from app.domain.match.events import (
     MATCH_STATUS_CHANGED,
 )
 from app.domain.match.messages import JUDGE_REVIEW_TECH_PAUSE
+from app.domain.overlay.live_fx import FX_EVENT_TYPES, build_live_fx
 from app.domain.shared.outbox import OutboxMessage
 from app.infrastructure.adapters.cs2.command_client import GameCommandTransport
 
@@ -108,10 +111,43 @@ def ingest_cs2_event(
     if result.applied or result.reason in {"out_of_order", "server_mismatch"}:
         uow.matches.save(match)
     if result.applied:
+        if event_type == "round_end":
+            write_audit(
+                uow,
+                match_id=match.id,
+                action=ACTION_SYSTEM_ROUND_END,
+                actor_type=ACTOR_SYSTEM,
+                tournament_id=match.tournament_id,
+                payload={
+                    "round": match.round_number,
+                    "score": {
+                        "team_a": match.score_team_a,
+                        "team_b": match.score_team_b,
+                    },
+                },
+                correlation_id=correlation_id,
+            )
         _enqueue_outbox(uow, match, result, correlation_id=correlation_id)
         # armed_pause already notified via maybe_arm_pause_on_round_start
         if review_pause_synced:
             notify_review_status(uow, match, JUDGE_REVIEW_TECH_PAUSE)
+        elif armed_pause is None and event_type in FX_EVENT_TYPES:
+            fx = build_live_fx(event_type, payload, sequence=sequence)
+            rebuild_overlay_snapshot(
+                uow,
+                match,
+                correlation_id=correlation_id,
+                notify=True,
+                live_fx=fx,
+            )
+        elif armed_pause is None and event_type == "round_start":
+            # Update round on scoreboard; keep any active round_win FX.
+            rebuild_overlay_snapshot(
+                uow,
+                match,
+                correlation_id=correlation_id,
+                notify=True,
+            )
         elif armed_pause is None and _should_rebuild_overlay(result):
             rebuild_overlay_snapshot(
                 uow,

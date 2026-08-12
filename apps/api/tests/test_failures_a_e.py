@@ -78,7 +78,12 @@ def test_failure_A_platform_restart_then_reconcile() -> None:
 
 
 def test_failure_B_agent_restart_covered_by_director_agent() -> None:
-    """B: Agent restart → apply desired, not command history (A12) — TZ003."""
+    """B: Agent restart → apply desired, not command history (A12) — TZ003.
+
+    Human runbook: docs/PRODUCTION-RECOVERY.md. Logic lives in director-agent
+    reconciler_test.go (TestRestartAppliesDesiredNotHistory); this test is a
+    pointer so the Fake CI suite documents Failure B without live OBS.
+    """
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[3]

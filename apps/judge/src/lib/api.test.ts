@@ -21,3 +21,10 @@ describe('reviewStatusLabel', () => {
     expect(reviewStatusLabel('paused')).toContain('пауза');
   });
 });
+
+describe('humanApiError', () => {
+  it('maps expired invite', async () => {
+    const { humanApiError } = await import('./api');
+    expect(humanApiError('401 unauthorized')).toMatch(/Ссылка/);
+  });
+});

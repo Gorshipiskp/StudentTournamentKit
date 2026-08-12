@@ -58,5 +58,10 @@
     "overlay_vite": "http://127.0.0.1:5173/overlay/{{MATCH_ID}}",
     "overlay_nginx": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}",
     "dashboard": "http://127.0.0.1:5174/director/{{MATCH_ID}}"
-  }
+  },
+  "browser_source_notes": [
+    "URL must use the SAME match id as director (not a placeholder).",
+    "Prefer http://127.0.0.1:5173/overlay/<matchId> in local smoke.",
+    "OBS: enable Refresh browser when scene becomes active; disable Shutdown when not visible."
+  ]
 }

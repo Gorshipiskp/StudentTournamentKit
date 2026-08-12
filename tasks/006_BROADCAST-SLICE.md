@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |------|----------|
-| **Статус** | approved |
+| **Статус** | done |
 | **Owner** | @team-lead / @owner |
 | **Исполнитель** | developer |
 | **Этап roadmap** | 5 — Broadcast Slice |
@@ -86,17 +86,17 @@
 
 ### Primary GATE (обязательно)
 
-- [ ] Director UI: delay hint + OBS Stream Delay checklist (RU)
-- [ ] Overlay: все 6 сцен читаемы + branding + watermark
-- [ ] `GET /matches/{id}/health` (или `/production/health`) — agent/obs/overlay/game
-- [ ] Health panel на director dashboard
-- [ ] Audit: ≥5 типов действий пишутся; UI список по матчу
-- [ ] `verify.ps1` зелёный
-- [ ] Owner smoke ≤ 25 мин (Fake OBS)
+- [x] Director UI: delay hint + OBS Stream Delay checklist (RU)
+- [x] Overlay: все 6 сцен читаемы + branding + watermark
+- [x] `GET /matches/{id}/health` (или `/production/health`) — agent/obs/overlay/game
+- [x] Health panel на director dashboard
+- [x] Audit: ≥5 типов действий пишутся; UI список по матчу
+- [x] `verify.ps1` зелёный
+- [x] Owner smoke ≤ 25 мин (Fake OBS)
 
 ### Optional
 
-- [ ] Реальный Twitch с delay (owner manual) → `live_twitch=done`
+- [ ] Реальный Twitch с delay (owner manual) → `live_twitch=done` · **сейчас `live_twitch=blocked`**
 - [ ] Live CS2 в health panel
 
 ---

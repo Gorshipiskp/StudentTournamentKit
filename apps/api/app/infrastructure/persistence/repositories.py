@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.domain.demo.entities import DemoFile
 from app.domain.game_server.entities import GameServer
 from app.domain.identity.entities import InviteToken
+from app.domain.audit.entities import MatchAuditEntry
 from app.domain.match.entities import Match
 from app.domain.match.game_command import GameCommand
 from app.domain.overlay.entities import OverlayState
@@ -604,6 +605,7 @@ class SqlAlchemyOverlayStateRepository:
             scene=row.scene,
             data=dict(row.data_json or {}),
             manual_overrides=dict(row.manual_overrides or {}),
+            updated_at=row.updated_at,
         )
 
     def add(self, state: OverlayState) -> None:
@@ -770,3 +772,54 @@ class SqlAlchemyInviteTokenRepository:
         row.match_id = invite.match_id
         row.expires_at = invite.expires_at
         row.revoked_at = invite.revoked_at
+
+
+def _audit_from_row(row: models.MatchAuditLog) -> MatchAuditEntry:
+    return MatchAuditEntry(
+        id=row.id,
+        match_id=row.match_id,
+        tournament_id=row.tournament_id,
+        correlation_id=row.correlation_id,
+        request_id=row.request_id,
+        actor_type=row.actor_type,
+        actor_id=row.actor_id,
+        action=row.action,
+        payload=dict(row.payload or {}),
+        result=row.result,
+        created_at=row.created_at,
+    )
+
+
+class SqlAlchemyMatchAuditLogRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, entry: MatchAuditEntry) -> None:
+        self._session.add(
+            models.MatchAuditLog(
+                id=entry.id,
+                match_id=entry.match_id,
+                tournament_id=entry.tournament_id,
+                correlation_id=entry.correlation_id,
+                request_id=entry.request_id,
+                actor_type=entry.actor_type,
+                actor_id=entry.actor_id,
+                action=entry.action,
+                payload=entry.payload,
+                result=entry.result,
+            )
+        )
+
+    def list_for_match(
+        self,
+        match_id: str,
+        *,
+        limit: int = 50,
+    ) -> list[MatchAuditEntry]:
+        rows = self._session.scalars(
+            select(models.MatchAuditLog)
+            .where(models.MatchAuditLog.match_id == match_id)
+            .order_by(models.MatchAuditLog.created_at.desc())
+            .limit(max(1, min(limit, 200)))
+        ).all()
+        return [_audit_from_row(row) for row in rows]

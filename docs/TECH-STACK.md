@@ -203,14 +203,14 @@ OBS Stream Output
 
 | Компонент | Технология |
 |-----------|------------|
-| Signaling | WebSocket через Platform API |
-| Media | **WebRTC** (unidirectional: Agent → Commentator) |
-| NAT traversal | **coturn** на Platform VPS (STUN + TURN) |
-| Browser | `RTCPeerConnection` + `<video autoplay>` |
-| Кол-во зрителей | 1–2 — **mesh/P2P** достаточно, SFU не нужен |
+| **Live (канон)** | OBS **WHIP** → **MediaMTX** (Platform) → `/watch` **WHEP** ([ADR-037](DECISIONS.md)) |
+| **Fake / CI** | Agent `--fake-webrtc` + signaling protocol 1 + **coturn** (P2P; без MediaMTX) |
+| Path | `stk/<matchId>` |
+| Browser | `RTCPeerConnection` + `<video autoplay>` (WHEP или P2P) |
+| Кол-во зрителей | ≤2 WHEP / ≤2 Fake subscribers |
 
 **Почему не HLS для комментаторов:** HLS даёт задержку 3–10+ с — неприемлемо.  
-**Почему не WebRTC через платформу как SFU:** лишняя сложность; видео и так с ноутбука режиссёра.
+**Почему MediaMTX на Platform для live:** один encode в OBS, без FFmpeg/Virtual Cam на ноутбуке; осознанный media relay (не LiveKit SaaS). Fake остаётся P2P без SFU.
 
 ### 4.2 Публичный Twitch (delayed)
 
@@ -218,7 +218,7 @@ OBS Stream Output
 |------|--------------|---------------|
 | Источник | OBS → Twitch RTMP | То же |
 | Задержка | **OBS Stream Delay** (Настройки → Дополнительно → Задержка трансляции), ~90–120 с | **FFmpeg** buffer в Director Agent **или** SRS на Platform VPS |
-| Live комментаторам | OBS Virtual Camera → Agent → WebRTC (**без** Stream Delay) | То же |
+| Live комментаторам | OBS **WHIP** → MediaMTX → WHEP (**без** Stream Delay) | Legacy: Virtual Cam → Agent (deprecated) |
 | Настройка | `broadcast_delay_seconds` в турнире = подсказка/чек-лист для OBS; не авто из Agent | Agent/API применяет delay автоматически |
 
 **Почему OBS Stream Delay в v1:** штатная функция OBS; Virtual Camera остаётся без задержки; меньше процессов на ноутбуке (уже CS2 + OBS); проще для режиссёра с базовым опытом OBS.

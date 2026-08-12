@@ -86,10 +86,10 @@
 
 | | |
 |---|---|
-| **Статус** | accepted |
+| **Статус** | accepted · уточнён **ADR-037** (live media path) |
 | **Контекст** | 1–2 комментатора удалённо; low latency; видео только в браузере |
-| **Решение** | **Director Agent** публикует WebRTC (live, no delay). Платформа — signaling + TURN + статусы. Комментатор открывает URL в браузере. |
-| **Последствия** | Нужен coturn; NAT traversal; аудио комментаторов вне платформы (Voicemeeter → OBS) |
+| **Решение** | Картинка с **ноутбука режиссёра (OBS)**; комментатор смотрит в браузере `/watch`. Источник = ноут (не запись матча с VPS). |
+| **Последствия** | Live-путь медиа: **ADR-037** (OBS WHIP → MediaMTX → WHEP). Fake/CI: P2P + signaling (ADR-022). Аудио комментаторов вне платформы (Voicemeeter → OBS). |
 
 ---
 
@@ -240,10 +240,10 @@
 
 | | |
 |---|---|
-| **Статус** | accepted |
+| **Статус** | accepted · **superseded for live** by **ADR-037**; остаётся каноном для **Fake/CI** |
 | **Контекст** | 1–2 комментатора, browser only, low latency, удалённо |
-| **Решение** | WebRTC из Director Agent; signaling через Platform WS; **coturn** на Platform VPS |
-| **Последствия** | Без mediasoup/SFU; TURN обязателен для NAT |
+| **Решение** | (Fake/CI) WebRTC из Director Agent (`--fake-webrtc`); signaling через Platform WS; **coturn** на Platform VPS |
+| **Последствия** | Protocol 1 без MediaMTX. Live больше не «P2P без media relay» — см. ADR-037. |
 
 ---
 
@@ -398,3 +398,14 @@
 | **Контекст** | Real-time — transport, не бизнес-домен |
 | **Решение** | Business domains: D1–D7. Platform capabilities: Realtime, Operations, Security, Persistence. D7 Overlay остаётся domain (merge invariants) |
 | **Последствия** | LAYERS.md: D8 не BC; frontend — feature-oriented, не 4 папки на каждый CRUD |
+
+---
+
+## ADR-037 — Комментаторы live: OBS WHIP + MediaMTX + WHEP
+
+| | |
+|---|---|
+| **Статус** | accepted (TZ011) |
+| **Контекст** | TZ008 live (Virtual Cam → FFmpeg → VP8 → Pion P2P) даёт плохое качество/задержку. Нужен один encode в OBS и раздача 1–2 комментаторам без платного SFU-SaaS. |
+| **Решение** | **Live:** OBS на ноутбуке режиссёра публикует **WHIP** на **MediaMTX** (Docker на Platform, compose profile `whip`). Комментатор `/watch` читает **WHEP**. Path канон `stk/<matchId>`. Platform выдаёт короткоживущие URL+bearer (как TURN); ≤2 активных WHEP на матч. **Fake/CI:** Pion `--fake-webrtc` + signaling **protocol 1** без MediaMTX (ADR-022). |
+| **Последствия** | ADR-022 «без SFU / media не через Platform» **не действует для live**. MediaMTX = осознанный media relay на VPS. Agent = только сцены OBS (не encode). Twitch RTMP + Stream Delay — отдельный выход OBS; WHIP без delay (F6). coturn остаётся для ICE при NAT. Секреты WHIP/WHEP не в git (F7). Контракт: [WEBRTC-CONTRACT.md](WEBRTC-CONTRACT.md). |

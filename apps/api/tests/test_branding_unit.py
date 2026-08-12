@@ -44,6 +44,25 @@ def test_merge_includes_branding_and_keeps_watermark() -> None:
     assert data["branding"]["colors"]["primary"] == "#112233"
 
 
+def test_merge_includes_tournament_name() -> None:
+    data = merge_overlay_data(
+        match_public={
+            "score": {"team_a": 0, "team_b": 0},
+            "round": 0,
+            "map": None,
+            "phase": "warmup",
+            "status": "scheduled",
+            "actual_paused": False,
+            "review_status": "none",
+            "judge_banner": None,
+        },
+        desired_scene="intro",
+        tournament_name="Spring Cup",
+    )
+    assert data["tournament_name"] == "Spring Cup"
+    assert data["watermark"]["visible"] is True
+
+
 def test_logo_too_large_rejected() -> None:
     uow = InMemoryUnitOfWork()
     tid = create_tournament_draft(uow, name="Cup")["tournament_id"]
@@ -71,6 +90,6 @@ def test_upload_then_overlay_has_branding() -> None:
     msg = get_overlay_message(uow, match.id)
     assert msg is not None
     branding = msg["data"]["branding"]
-    assert branding["logo_url"] == f"/api/v1/tournaments/{tid}/branding/logo"
+    assert branding["logo_url"].startswith(f"/api/v1/tournaments/{tid}/branding/logo?v=")
     assert branding["colors"]["primary"] == "#3d9a86"
     assert msg["data"]["watermark"]["visible"] is True

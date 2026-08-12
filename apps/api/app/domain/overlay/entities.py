@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 
@@ -24,6 +25,7 @@ class OverlayState:
     scene: str
     data: dict[str, Any]
     manual_overrides: dict[str, Any] = field(default_factory=dict)
+    updated_at: datetime | None = None
 
     def to_message(self) -> dict[str, Any]:
         return {

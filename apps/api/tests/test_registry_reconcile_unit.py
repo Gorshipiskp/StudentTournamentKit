@@ -56,6 +56,32 @@ def test_assign_server_copies_endpoint_and_secret() -> None:
     assert server.assigned_match_id == "m1"
 
 
+def test_assign_server_force_steals_from_other_match() -> None:
+    from app.application.commands.game_server_registry import RegistryConflict
+
+    uow = InMemoryUnitOfWork()
+    create_match(uow, match_id="m_old")
+    create_match(uow, match_id="m_new")
+    create_game_server(
+        uow,
+        server_id="srv_local",
+        endpoint_url="http://127.0.0.1:27099",
+        webhook_secret="sec",
+    )
+    assign_server_to_match(uow, match_id="m_old", server_id="srv_local")
+    try:
+        assign_server_to_match(uow, match_id="m_new", server_id="srv_local")
+        raise AssertionError("expected conflict without force")
+    except RegistryConflict:
+        pass
+    assign_server_to_match(
+        uow, match_id="m_new", server_id="srv_local", force=True
+    )
+    assert uow.game_servers.get("srv_local").assigned_match_id == "m_new"
+    assert uow.matches.get("m_old").game_server_id is None
+    assert uow.matches.get("m_new").game_server_id == "srv_local"
+
+
 def test_reconcile_repairs_score_after_missed_events() -> None:
     uow = InMemoryUnitOfWork()
     create_match(

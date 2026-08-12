@@ -19,6 +19,10 @@ EventType = Literal[
     "tech_pause_ended",
     "match_completed",
     "heartbeat",
+    "bomb_planted",
+    "bomb_defuse_start",
+    "bomb_defused",
+    "bomb_exploded",
 ]
 
 CommandType = Literal[

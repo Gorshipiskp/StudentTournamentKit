@@ -59,6 +59,26 @@ curl -sS -X POST "$PLATFORM_URL/api/v1/matches/<match_id>/assign-server" \
   -d "{\"server_id\":\"$STK_SERVER_ID\"}"
 ```
 
+### Live локальный DS (без Fake) — TZ009
+
+**Один скрипт (рекомендуется):**
+
+```powershell
+cd C:\BestCSTournaments
+.\scripts\live-cs2-local.ps1
+```
+
+Потом `connect 127.0.0.1:27015` и сыграй раунд.
+
+Ручной путь:
+
+1. Register + `assign-server` (`endpoint_url=http://127.0.0.1:27099`).
+2. В Bridge `config.json`: те же `MatchId`, `ServerId`, `WebhookSecret`, `PlatformUrl`.
+3. Организатор: **Старт на локальном сервере** или `POST …/start-live`.
+4. DS шлёт `heartbeat` / `round_*` → счёт на матче.
+
+См. [LOCAL-CS2-DS.md](./LOCAL-CS2-DS.md) · [TZ009-RECON.md](../../workers/developer/notes/TZ009-RECON.md).
+
 ---
 
 ## Demo lifecycle (ADR-034)
@@ -82,7 +102,8 @@ Env: `DEMO_DURABLE_ROOT` (по умолчанию `data/demos` от корня �
 | Компонент | Состояние |
 |-----------|-----------|
 | CONTRACT + Fake | working |
-| Bridge skeleton | в репо; build может быть blocked без SDK |
+| Bridge skeleton | **0.2.0** CSS round events; build net8 |
 | deploy-cs2.sh | dry-run + scaffolding; полный Steam/CSS — оператор на VPS |
 | **Local CS2 DS (@owner)** | Metamod + CSS + MatchZy + STK.Bridge — `scripts/install-local-cs2-plugins.ps1` |
-| live_smoke | **blocked** до gameinfo patch + Platform register + Bridge hooks |
+| live start Platform | `POST …/start-live` после assign (Fake `…/start` без регрессии) |
+| live_smoke | owner track — рестарт DS + start-live |

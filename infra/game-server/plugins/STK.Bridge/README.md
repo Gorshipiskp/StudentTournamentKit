@@ -1,10 +1,11 @@
-# STK.Bridge — CounterStrikeSharp plugin (skeleton)
+# STK.Bridge — CounterStrikeSharp plugin
 
-Тонкий слой между **MatchZy** и Platform: нормализованные webhooks, heartbeat, приём whitelist-команд.
+Тонкий слой между **MatchZy**/CS2 и Platform: нормализованные webhooks, heartbeat, приём whitelist-команд.
 
 Контракт: [`../../CONTRACT.md`](../../CONTRACT.md) · `protocol_version: 1`.
 
-**Статус (TZ002 P6):** скелет исходников в репо. Хуки MatchZy/CSS **не** выдуманы — подключать после recon на машине с CS2DS.
+**Статус (0.3.2):** CSS RoundStart/End + bomb FX; warmup → round 0; **round_end всегда** уходит на Platform (анимации/счёт).
+(`bomb_*` → overlay `data.fx`). Heartbeat + commands без изменений формы.
 
 ---
 
@@ -12,28 +13,39 @@
 
 | Компонент | Файл | Назначение |
 |-----------|------|------------|
-| Plugin entry | `StkBridgePlugin.cs` | `BasePlugin` Load/Unload |
+| Plugin entry | `StkBridgePlugin.cs` | `BasePlugin` Load/Unload + CSS event handlers |
+| Live state | `MatchLiveState.cs` | round/score/phase для webhook + snapshot |
+| Scores | `GameScoreReader.cs` | `cs_team_manager` → `CTeam.Score` |
 | Config | `config.json`, `StkBridgeConfig.cs` | Platform URL, secret, match/server id, listen port |
-| Webhook + HMAC | `WebhookClient.cs` | `POST …/api/v1/internal/cs2/events` |
+| Webhook + HMAC | `WebhookClient.cs` | `POST …/api/v1/internal/cs2/events` + warn-логи |
 | Sequence | `SequenceCounter.cs` | монотонный `sequence` per match |
 | Heartbeat | `HeartbeatService.cs` | периодический `heartbeat` |
 | Commands | `CommandListener.cs` | stub `POST /v1/commands`, `GET /v1/snapshot`, `/health` |
 
 ---
 
-## Recon (актуальные ссылки, best effort)
+## Recon / P2 hooks (ссылки, без выдуманных API)
 
-Проверяй версии на VPS — не копируй вслепую:
+Полная карта: **[TZ009-RECON.md](../../../../workers/developer/notes/TZ009-RECON.md)**.
 
 | Тема | Ссылка |
 |------|--------|
-| CounterStrikeSharp docs | https://docs.cssharp.dev/ |
+| CSS game events | https://docs.cssharp.dev/docs/features/game-events.html |
+| CSS event handlers example | https://docs.cssharp.dev/examples/WithGameEventHandlers.html |
+| `EventRoundStart` / `EventRoundEnd` | https://docs.cssharp.dev/api/CounterStrikeSharp.API.Core.EventRoundStart.html · [EventRoundEnd](https://docs.cssharp.dev/api/CounterStrikeSharp.API.Core.EventRoundEnd.html) |
 | Hello World plugin | https://docs.cssharp.dev/docs/guides/hello-world-plugin.html |
-| CSS GitHub | https://github.com/roflmuffin/CounterStrikeSharp |
-| NuGet `CounterStrikeSharp.API` | https://www.nuget.org/packages/CounterStrikeSharp.API |
-| MatchZy | https://github.com/shobhit-pathak/MatchZy |
+| CSS GitHub / NuGet | https://github.com/roflmuffin/CounterStrikeSharp · https://www.nuget.org/packages/CounterStrikeSharp.API |
+| MatchZy HTTP events | https://shobhit-pathak.github.io/MatchZy/events_and_forwards/ |
+| MatchZy event catalog | https://shobhit-pathak.github.io/MatchZy/events.html |
+| MatchZy Events.cs | https://github.com/shobhit-pathak/MatchZy/blob/main/Events.cs |
 
-На момент скелета: TECH-STACK ориентир **.NET 8**; upstream CSS в 2026 двигается к **.NET 10** (плагины net8 часто грузятся с `RollForward`). На VPS сверь `dotnet --list-runtimes` и версию CSS в `addons/counterstrikesharp`.
+**GATE events (минимум):** `heartbeat` + `round_start` + `round_end` — **подключены в 0.2.0** (CSS primary).
+
+**Сборка:** target **net8.0** + NuGet `CounterStrikeSharp.API` **1.0.340** (совместимо с SDK 8). На DS стоит CSS **1.0.371** (runtime net10) — плагин грузится через `RollForward`. NuGet 1.0.371 требует net10 SDK — не поднимаем без решения TL.
+
+**После деплоя:** рестарт dedicated → в логе `Registered CSS handlers: EventRoundStart, EventRoundEnd` и `STK.Bridge loading… version=0.2.0`.
+
+**P2 alt (не использован):** MatchZy `matchzy_remote_log_url` → адаптер в Bridge.
 
 ---
 
@@ -58,8 +70,9 @@ dotnet build -c Release
 ## BUILD (owner Windows DS)
 
 ```text
-Status: builds OK with .NET SDK 8.0.424 (2026-08-12)
-Install: scripts/install-local-cs2-plugins.ps1
+Status: builds OK with .NET SDK 8.0.424 (2026-08-12); plugin 0.2.0 deployed to LOCAL-CS2
+Install (full stack): scripts/install-local-cs2-plugins.ps1
+Bridge-only: dotnet build -c Release → copy DLL/deps/pdb (сохранить config.json)
 ```
 
 ### Checklist на VPS / build machine владельца
@@ -88,8 +101,9 @@ Install: scripts/install-local-cs2-plugins.ps1
 
 ---
 
-## Не в scope этого скелета
+## Не в scope / дальше
 
-- Полные CSS listeners / MatchZy callbacks
-- Правки MatchZy
+- Side-effect Pause/Resume на CS2 → P3
+- Live start без Fake → P3
+- Fork MatchZy (F1)
 - Overlay / RCON из application layer

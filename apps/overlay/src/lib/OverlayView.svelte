@@ -1,6 +1,13 @@
 <script lang="ts">
   import type { OverlaySnapshot } from './snapshot';
   import { emptyOverlaySnapshot } from './snapshot';
+  import WaitingScene from './scenes/WaitingScene.svelte';
+  import IntroScene from './scenes/IntroScene.svelte';
+  import TeamsScene from './scenes/TeamsScene.svelte';
+  import IngameScene from './scenes/IngameScene.svelte';
+  import BreakScene from './scenes/BreakScene.svelte';
+  import WinnerScene from './scenes/WinnerScene.svelte';
+  import EventFx from './scenes/EventFx.svelte';
 
   let {
     snapshot = null,
@@ -27,78 +34,67 @@
       .filter(Boolean)
       .join('; '),
   );
+
+  const scoreLive = $derived(
+    `${data.team_a.name} ${data.team_a.score} : ${data.team_b.score} ${data.team_b.name}`,
+  );
+
+  const floatLogo = $derived(Boolean(branding?.logo_url) && scene === 'ingame');
+  const showDebugChip = $derived(
+    typeof location !== 'undefined' &&
+      new URLSearchParams(location.search).has('debug'),
+  );
+  const liveFx = $derived(data.fx ?? null);
 </script>
 
 <div
   class="stage scene-{scene}"
   class:has-brand={Boolean(branding)}
+  class:has-logo={Boolean(branding?.logo_url)}
   data-version={snap.version}
   style={styleVars || undefined}
 >
-  {#if branding?.logo_url}
-    <img class="brand-logo" src={branding.logo_url} alt="" />
+  {#if floatLogo}
+    <img class="brand-logo" src={branding!.logo_url!} alt="" />
   {/if}
-  {#if scene === 'waiting'}
-    <section class="panel center">
-      <p class="eyebrow">Ожидание</p>
-      <h1>Матч скоро начнётся</h1>
-    </section>
-  {:else if scene === 'intro'}
-    <section class="panel center">
-      <p class="eyebrow">Интро</p>
-      <h1>{data.team_a.name} <span class="vs">vs</span> {data.team_b.name}</h1>
-      {#if data.map}<p class="meta">{data.map}</p>{/if}
-    </section>
-  {:else if scene === 'teams'}
-    <section class="panel teams">
-      <div class="team">
-        <h2>{data.team_a.name}</h2>
-      </div>
-      <div class="team right">
-        <h2>{data.team_b.name}</h2>
-      </div>
-    </section>
-  {:else if scene === 'break'}
-    <section class="panel center">
-      <p class="eyebrow">Перерыв</p>
-      <h1>{data.team_a.score} : {data.team_b.score}</h1>
-    </section>
-  {:else if scene === 'winner'}
-    <section class="panel center">
-      <p class="eyebrow">Победитель</p>
-      <h1>
-        {data.team_a.score >= data.team_b.score ? data.team_a.name : data.team_b.name}
-      </h1>
-      <p class="meta">{data.team_a.score} : {data.team_b.score}</p>
-    </section>
-  {:else}
-    <!-- ingame + default -->
-    <section class="scoreboard" aria-label="Счёт матча">
-      <div class="side">
-        <span class="name">{data.team_a.name}</span>
-        <span class="score">{data.team_a.score}</span>
-      </div>
-      <div class="mid">
-        <span class="round">Раунд {data.round}</span>
-        {#if data.map}<span class="map">{data.map}</span>{/if}
-        {#if data.paused}<span class="paused">Пауза</span>{/if}
-      </div>
-      <div class="side right">
-        <span class="score">{data.team_b.score}</span>
-        <span class="name">{data.team_b.name}</span>
-      </div>
-    </section>
+
+  {#key scene}
+    {#if scene === 'waiting'}
+      <WaitingScene {data} />
+    {:else if scene === 'intro'}
+      <IntroScene {data} />
+    {:else if scene === 'teams'}
+      <TeamsScene {data} />
+    {:else if scene === 'ingame'}
+      <IngameScene {data} />
+    {:else if scene === 'break'}
+      <BreakScene {data} />
+    {:else if scene === 'winner'}
+      <WinnerScene {data} />
+    {:else}
+      <IngameScene {data} />
+    {/if}
+  {/key}
+
+  <EventFx fx={liveFx} />
+
+  {#if showDebugChip}
+    <div class="scene-chip" aria-hidden="true">{scene} · v{snap.version}</div>
   {/if}
+
+  <div class="sr-live" aria-live="polite">{scoreLive}</div>
 
   {#if banner}
-    <div class="judge-banner" role="status">{banner}</div>
+    <div class="judge-banner" role="status" aria-live="assertive">
+      <span class="judge-tag">Судья</span>
+      <span>{banner}</span>
+    </div>
   {/if}
 
-  <!-- F4: watermark always rendered -->
   <div class="watermark" aria-hidden="true">{wm}</div>
 
   {#if connection !== 'open'}
-    <div class="conn" title={connection}>●</div>
+    <div class="conn" role="status" title={connection} aria-label="Нет связи с overlay">●</div>
   {/if}
 </div>
 
@@ -107,11 +103,11 @@
     position: relative;
     width: 100%;
     height: 100%;
-    padding: 2.5vh 2.5vw;
+    padding: 0;
   }
 
   .stage.has-brand {
-    --panel-accent: var(--brand-primary, var(--accent, #3d9a86));
+    --panel-accent: var(--brand-primary, var(--accent));
   }
 
   .stage.has-brand::before {
@@ -121,157 +117,89 @@
     background-image: var(--brand-bg, none);
     background-size: cover;
     background-position: center;
-    opacity: 0.22;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .stage.has-brand::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        70% 55% at 50% 0%,
+        color-mix(in srgb, var(--brand-primary, var(--accent)) 16%, transparent),
+        transparent 65%
+      ),
+      linear-gradient(
+        180deg,
+        transparent 70%,
+        color-mix(in srgb, var(--brand-accent, var(--campus)) 8%, transparent)
+      );
     pointer-events: none;
     z-index: 0;
   }
 
   .brand-logo {
     position: absolute;
-    top: 2.5vh;
-    left: 2.5vw;
-    max-height: 7vh;
-    max-width: 18vw;
+    top: 2vh;
+    left: 2vw;
+    max-height: 6.5vh;
+    max-width: 14vw;
     object-fit: contain;
     z-index: 3;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    padding: 0.35rem 0.45rem;
+    background: rgba(7, 16, 22, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
   }
 
-  .panel {
-    position: absolute;
-    left: 50%;
-    top: 42%;
-    transform: translate(-50%, -50%);
-    min-width: min(72vw, 920px);
-    padding: 2rem 2.5rem;
-    border-radius: 4px;
-    background: var(--panel);
-    backdrop-filter: blur(6px);
-    text-align: center;
-  }
-
-  .panel.teams {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
-    text-align: left;
-  }
-
-  .team.right {
-    text-align: right;
-  }
-
-  .eyebrow {
-    margin: 0 0 0.4rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    color: var(--brand-primary, var(--accent));
-  }
-
-  .panel,
-  .scoreboard,
   .judge-banner,
   .watermark,
   .brand-logo {
     z-index: 2;
   }
 
-  h1 {
-    margin: 0;
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    font-weight: 700;
-  }
-
-  h2 {
-    margin: 0;
-    font-size: clamp(1.4rem, 3vw, 2.2rem);
-  }
-
-  .vs {
-    opacity: 0.55;
-    font-weight: 500;
-  }
-
-  .meta {
-    margin: 0.75rem 0 0;
-    color: var(--muted);
-  }
-
-  .scoreboard {
-    position: absolute;
-    left: 50%;
-    top: 3.5vh;
-    transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 1.25rem;
-    min-width: min(70vw, 860px);
-    padding: 0.85rem 1.4rem;
-    border-radius: 4px;
-    background: var(--panel);
-    backdrop-filter: blur(6px);
-  }
-
-  .side {
-    display: flex;
-    align-items: baseline;
-    gap: 0.85rem;
-  }
-
-  .side.right {
-    justify-content: flex-end;
-  }
-
-  .name {
-    font-size: 1.15rem;
-    font-weight: 600;
-  }
-
-  .score {
-    font-size: 2rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .mid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
-
-  .paused {
-    color: var(--danger);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
   .judge-banner {
     position: absolute;
     left: 50%;
-    bottom: 12vh;
+    bottom: 11vh;
     transform: translateX(-50%);
-    padding: 0.55rem 1.2rem;
-    border-radius: 4px;
-    background: rgba(180, 40, 40, 0.78);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    max-width: min(80vw, 640px);
+    padding: 0.55rem 1rem 0.55rem 0.55rem;
+    border-radius: 2px;
+    background: rgba(120, 18, 28, 0.88);
+    border: 1px solid rgba(255, 120, 120, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.02em;
+    animation: ov-rise 0.35s ease-out both;
+  }
+
+  .judge-tag {
+    flex-shrink: 0;
+    padding: 0.28rem 0.55rem;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
   .watermark {
     position: absolute;
-    right: 1.4vw;
-    bottom: 1.6vh;
-    font-size: 0.72rem;
-    letter-spacing: 0.28em;
+    right: 1.5vw;
+    bottom: 1.5vh;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.32em;
     text-transform: uppercase;
-    color: rgba(242, 244, 247, 0.22);
+    color: rgba(242, 247, 245, 0.2);
     pointer-events: none;
     user-select: none;
   }
@@ -282,6 +210,42 @@
     bottom: 1.4vh;
     color: var(--danger);
     font-size: 0.7rem;
-    opacity: 0.85;
+    opacity: 0.9;
+    z-index: 2;
+    animation: ov-pulse 1.4s ease-in-out infinite;
+  }
+
+  .scene-chip {
+    position: absolute;
+    left: 1.2vw;
+    top: 1.2vh;
+    z-index: 4;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(242, 247, 245, 0.45);
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .stage.has-logo.scene-ingame .scene-chip {
+    left: calc(2vw + 14vw + 0.6rem);
+  }
+
+  .sr-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>

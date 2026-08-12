@@ -77,10 +77,40 @@ go build -o stk-director-agent.exe ./cmd/agent
 
 TURN (опционально): `docker compose --profile webrtc` + `TURN_*` в `.env`. Agent запрашивает `POST .../turn-credentials`. Без coturn — STUN Google.
 
-OBS Virtual Cam → FFmpeg → Pion: см. [`internal/infrastructure/webrtc/README.md`](internal/infrastructure/webrtc/README.md) (не обязательно для GATE).
+OBS Virtual Cam → FFmpeg → Pion: **deprecated** для комментаторов — см. §4d (WHIP). Код `--live-webrtc` ещё есть (§4c).
+
+### 4c. Live Virtual Cam — **deprecated** (TZ008 legacy)
+
+> Не канон матч-дня. Канон: **§4d OBS WHIP**. Флаг `--live-webrtc` оставлен для отладки.
+
+Комментатор на `/watch?media=fake` + Agent `--live-webrtc` ещё может видеть Virtual Cam (старый путь).
+
+**Шаги (legacy):**
+
+1. OBS → Start Virtual Camera; FFmpeg на PATH.
+2. Agent: `--live-webrtc` (не вместе с `--fake-webrtc`).
+3. `/watch?media=fake` (signaling protocol 1).
+
+| Flag / env | Смысл | Когда |
+|------------|--------|--------|
+| `--fake-webrtc` | Тестовый VP8-паттерн | CI, verify, репетиция Fake |
+| `--live-webrtc` / `STK_LIVE_WEBRTC=1` | **Deprecated** live VC | Только legacy / отладка |
+| `--webrtc-device` / `STK_WEBRTC_DEVICE` | dshow device | Default: `OBS Virtual Camera` |
+| `--webrtc-ffmpeg` / `STK_WEBRTC_FFMPEG` | путь к ffmpeg | Если не в PATH |
+
+### 4d. Live WHIP — канон комментаторам (TZ011)
+
+Agent **не** кодирует видео. Только OBS WebSocket (сцены).
+
+1. MediaMTX: `docker compose --profile whip up -d mediamtx`
+2. Agent с реальным OBS (**без** `--live-webrtc` / без `--fake-webrtc` на матч-день)
+3. `POST /api/v1/matches/{id}/whip-publish` → OBS Service **WHIP** → Start Streaming
+4. `/watch?token=…` (default WHEP)
+
+Контракт: [`docs/WEBRTC-CONTRACT.md`](../../docs/WEBRTC-CONTRACT.md) protocol 2.  
+Трек: [`live_whip`](../../docs/ALPHA-LIVE-TRACKS.md). Smoke: [TZ011-OWNER-SMOKE](../../workers/developer/notes/TZ011-OWNER-SMOKE.md).
 
 ### 5. Dashboard режиссёра
-
 ```powershell
 cd apps/dashboard
 npm install
@@ -149,8 +179,9 @@ internal/domain/                Desired/Actual
 internal/application/           Reconciler
 internal/presentation/platform/ Platform Agent WS client
 internal/infrastructure/obs/    FakeOBS + OBS WS v5 client (whitelist scenes only)
-internal/infrastructure/webrtc/ Pion publisher + --fake-webrtc IVF pattern
+internal/infrastructure/webrtc/ Fake IVF + Live Virtual Cam capture (TZ008)
 templates/                      OBS scene stub + Stream Delay checklist
 ```
 
-Контракт signaling: [`docs/WEBRTC-CONTRACT.md`](../../docs/WEBRTC-CONTRACT.md).
+Контракт signaling: [`docs/WEBRTC-CONTRACT.md`](../../docs/WEBRTC-CONTRACT.md).  
+Live capture commands / spike: [`internal/infrastructure/webrtc/README.md`](internal/infrastructure/webrtc/README.md).

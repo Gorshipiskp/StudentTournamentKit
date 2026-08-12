@@ -1,7 +1,9 @@
 package webrtcpub
 
 import (
+	"context"
 	"testing"
+	"time"
 )
 
 func TestBuildSignalingWSURL(t *testing.T) {
@@ -34,5 +36,23 @@ func TestDefaultIVFPathReadable(t *testing.T) {
 	}
 	if ft.Track == nil {
 		t.Fatal("expected track")
+	}
+}
+
+// Fake path must pump samples without OBS (CI).
+func TestFakeTrackRunBrief(t *testing.T) {
+	path, err := DefaultIVFPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ft, err := NewFakeTrackFromIVF(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	err = ft.Run(ctx)
+	if err != nil && err != context.DeadlineExceeded && ctx.Err() == nil {
+		t.Fatalf("fake run: %v", err)
 	}
 }

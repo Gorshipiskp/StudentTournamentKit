@@ -6,6 +6,8 @@ from typing import Any
 from uuid import uuid4
 
 from app.application.unit_of_work import UnitOfWork
+from app.application.commands.write_audit import write_audit
+from app.domain.audit.entities import ACTION_DIRECTOR_SCORE_OVERRIDE, ACTOR_DIRECTOR
 from app.domain.match.entities import Match
 from app.domain.overlay.entities import OVERLAY_UPDATED, OverlayState
 from app.domain.overlay.merge_policy import merge_overlay_data
@@ -34,10 +36,15 @@ def rebuild_overlay_snapshot(
     *,
     correlation_id: str | None = None,
     notify: bool = True,
+    live_fx: dict[str, Any] | None = None,
+    clear_fx: bool = False,
 ) -> dict[str, Any]:
     """
     Merge → bump revision → persist → optional outbox overlay.updated.
     Returns WS/HTTP message dict.
+
+    live_fx: ephemeral CS2 chrome (bomb / round). If omitted, previous fx is kept
+    unless clear_fx=True.
     """
     existing = uow.overlays.get(match.id)
     revision = (existing.revision if existing else 0) + 1
@@ -48,6 +55,8 @@ def rebuild_overlay_snapshot(
         notify=notify,
         correlation_id=correlation_id,
         previous=existing,
+        live_fx=live_fx,
+        clear_fx=clear_fx,
     )
     return state.to_message()
 
@@ -110,6 +119,15 @@ def apply_overlay_override(
         existing.manual_overrides = merged
 
     uow.overlays.save(existing)
+    write_audit(
+        uow,
+        match_id=match_id,
+        action=ACTION_DIRECTOR_SCORE_OVERRIDE,
+        actor_type=ACTOR_DIRECTOR,
+        tournament_id=match.tournament_id,
+        payload={"clear": clear, "fields": sorted((patch or {}).keys()) if not clear else []},
+        correlation_id=correlation_id,
+    )
     return rebuild_overlay_snapshot(
         uow,
         match,
@@ -141,6 +159,14 @@ def _branding_for_match(uow: UnitOfWork, match: Match) -> dict[str, Any] | None:
     return payload
 
 
+def _tournament_name(uow: UnitOfWork, match: Match) -> str | None:
+    tournament = uow.tournaments.get(match.tournament_id)
+    if tournament is None:
+        return None
+    name = (tournament.name or "").strip()
+    return name or None
+
+
 def _persist_snapshot(
     uow: UnitOfWork,
     match: Match,
@@ -149,6 +175,8 @@ def _persist_snapshot(
     notify: bool,
     correlation_id: str | None,
     previous: OverlayState | None = None,
+    live_fx: dict[str, Any] | None = None,
+    clear_fx: bool = False,
 ) -> OverlayState:
     production = _ensure_production(uow, match.id)
 
@@ -159,11 +187,21 @@ def _persist_snapshot(
             overrides = dict(current.manual_overrides)
             previous = current
 
+    fx: dict[str, Any] | None = None
+    if clear_fx:
+        fx = None
+    elif live_fx is not None:
+        fx = live_fx
+    elif previous and isinstance(previous.data.get("fx"), dict):
+        fx = dict(previous.data["fx"])
+
     data = merge_overlay_data(
         match_public=match.to_public_dict(),
         desired_scene=production.desired_scene or SCENE_WAITING,
         manual_overrides=overrides,
         branding=_branding_for_match(uow, match),
+        tournament_name=_tournament_name(uow, match),
+        live_fx=fx,
     )
     state = OverlayState(
         match_id=match.id,

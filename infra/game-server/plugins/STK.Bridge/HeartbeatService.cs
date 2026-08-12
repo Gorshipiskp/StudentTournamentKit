@@ -1,8 +1,7 @@
 namespace STK.Bridge;
 
 /// <summary>
-/// Periodic heartbeat event stub (CONTRACT type=heartbeat).
-/// Full timer wiring happens in StkBridgePlugin.OnAllPluginsLoaded.
+/// Periodic heartbeat event (CONTRACT type=heartbeat).
 /// </summary>
 public sealed class HeartbeatService
 {

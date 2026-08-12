@@ -4,8 +4,13 @@ import {
   isMockWatch,
   isWatchPath,
   MAX_WATCH_SUBSCRIBERS,
+  humanWatchError,
+  mediaStatusLabel,
+  resolveMediaMode,
   resolveWatchInviteToken,
+  sceneLabel,
 } from './watchAuth';
+import { isPublisherMissingStatus } from './whepClient';
 
 describe('resolveWatchInviteToken', () => {
   it('reads ?token=', () => {
@@ -35,6 +40,14 @@ describe('watch helpers', () => {
     expect(isMockWatch('')).toBe(false);
   });
 
+  it('resolves media mode', () => {
+    expect(resolveMediaMode('?mock=1')).toBe('mock');
+    expect(resolveMediaMode('?media=fake')).toBe('fake');
+    expect(resolveMediaMode('?media=whep')).toBe('whep');
+    expect(resolveMediaMode('?media=mock')).toBe('mock');
+    expect(resolveMediaMode('')).toBe('whep');
+  });
+
   it('documents max 2 subscribers', () => {
     expect(MAX_WATCH_SUBSCRIBERS).toBe(2);
   });
@@ -42,5 +55,19 @@ describe('watch helpers', () => {
   it('maps tech pause banner', () => {
     expect(bannerLabel('tech_pause')).toContain('пауза');
     expect(bannerLabel(null)).toBeNull();
+  });
+
+  it('humanizes watch errors and scene', () => {
+    expect(humanWatchError('429 too many')).toMatch(/2/);
+    expect(mediaStatusLabel('waiting_publisher')).toMatch(/картинку/i);
+    expect(sceneLabel('ingame')).toBe('Игра');
+  });
+});
+
+describe('whep publisher missing heuristic', () => {
+  it('treats 404 as waiting publisher', () => {
+    expect(isPublisherMissingStatus(404, '')).toBe(true);
+    expect(isPublisherMissingStatus(400, '{"error":"no stream available"}')).toBe(true);
+    expect(isPublisherMissingStatus(403, 'forbidden')).toBe(false);
   });
 });

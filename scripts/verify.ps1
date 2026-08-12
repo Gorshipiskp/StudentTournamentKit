@@ -1,10 +1,10 @@
-# STK verify - Foundation + Game + Production + People + Tournament Slice (TZ005 GATE)
+# STK verify - Production Ready (TZ010; Fake CI - live OBS/CS2/WHIP not required)
 $ErrorActionPreference = "Stop"
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $Root
 
-Write-Host "== STK verify (TZ005 Tournament GATE) ==" -ForegroundColor Cyan
+Write-Host "== STK verify (TZ010 Production Ready - Fake CI; live OBS/CS2/WHIP not required) ==" -ForegroundColor Cyan
 Write-Host ("root: {0}" -f $Root)
 
 $EnvFile = Join-Path $Root ".env"
@@ -20,31 +20,71 @@ if (-not (Test-Path $EnvFile)) {
 }
 
 Write-Host ""
-Write-Host "[1/7] artifacts (game + production + people + tournament)" -ForegroundColor Cyan
+Write-Host "[1/7] artifacts (TZ010 Production Ready + prior)" -ForegroundColor Cyan
 $required = @(
+  "docs/PRODUCTION-RUNBOOK.md",
+  "docs/PRODUCTION-RECOVERY.md",
+  "docs/UPDATE.md",
+  "workers/developer/notes/TZ010-PROMPT-RUNBOOK.md",
+  "workers/developer/notes/TZ010-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ010-RECON.md",
+  "tasks/010_PRODUCTION-READY.md",
   "infra/game-server/CONTRACT.md",
+  "infra/game-server/LOCAL-CS2-DS.md",
   "tools/fake-cs2/fake_cs2/cli.py",
   "infra/game-server/plugins/STK.Bridge/STK.Bridge.csproj",
-  "infra/game-server/plugins/STK.Bridge/README.md",
-  "scripts/deploy-cs2.sh",
-  "infra/game-server/README.md",
+  "infra/game-server/plugins/STK.Bridge/GameScoreReader.cs",
+  "infra/mediamtx/mediamtx.yml",
+  "infra/mediamtx/README.md",
+  "infra/mediamtx/spike/whep.html",
   "docs/OVERLAY-CONTRACT.md",
   "docs/WEBRTC-CONTRACT.md",
+  "docs/BROADCAST-DELAY.md",
+  "docs/BROADCAST-HEALTH.md",
+  "docs/ALPHA-RUNBOOK.md",
+  "docs/ALPHA-LIVE-TRACKS.md",
+  "docs/alpha/organizer.md",
+  "docs/alpha/director.md",
+  "docs/alpha/judge.md",
+  "docs/alpha/POST-MORTEM-TEMPLATE.md",
+  "scripts/alpha-dry-run.ps1",
   "apps/director-agent/templates/scenes.json",
   "apps/director-agent/templates/README.md",
-  "apps/director-agent/README.md",
-  "apps/overlay/package.json",
-  "apps/dashboard/package.json",
-  "apps/judge/package.json",
-  "apps/dashboard/src/lib/WizardNav.svelte",
-  "apps/dashboard/src/lib/AdminPage.svelte",
-  "apps/api/tests/test_multi_tournament_smoke.py",
-  "workers/developer/notes/TZ003-OWNER-SMOKE.md",
-  "workers/developer/notes/TZ004-OWNER-SMOKE.md",
-  "workers/developer/notes/TZ005-OWNER-SMOKE.md",
-  "workers/developer/notes/TZ005-PROMPT-RUNBOOK.md",
-  "apps/director-agent/internal/infrastructure/webrtc/testdata/pattern.ivf",
-  "apps/api/alembic/versions/0012_tournament_branding.py"
+  "apps/director-agent/internal/infrastructure/webrtc/live_track.go",
+  "apps/director-agent/internal/infrastructure/webrtc/fake_track.go",
+  "apps/director-agent/internal/infrastructure/webrtc/README.md",
+  "apps/overlay/src/lib/scenes/WaitingScene.svelte",
+  "apps/overlay/src/lib/scenes/WinnerScene.svelte",
+  "apps/overlay/src/lib/whepClient.ts",
+  "apps/overlay/src/lib/WatchPage.svelte",
+  "apps/dashboard/src/lib/DirectorPage.svelte",
+  "apps/dashboard/src/lib/MatchOps.svelte",
+  "apps/api/app/application/commands/get_match_health.py",
+  "apps/api/app/application/commands/write_audit.py",
+  "apps/api/app/application/commands/start_match.py",
+  "apps/api/app/presentation/http/routers/whip.py",
+  "apps/api/app/infrastructure/security/mediamtx_credentials.py",
+  "apps/api/tests/test_match_health_unit.py",
+  "apps/api/tests/test_audit_unit.py",
+  "apps/api/tests/test_match_ops_unit.py",
+  "apps/api/tests/test_mediamtx_credentials_unit.py",
+  "apps/api/tests/test_failures_a_e.py",
+  "workers/developer/notes/TZ006-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ007-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ007-PROMPT-RUNBOOK.md",
+  "workers/developer/notes/TZ008-PROMPT-RUNBOOK.md",
+  "workers/developer/notes/TZ008-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ009-PROMPT-RUNBOOK.md",
+  "workers/developer/notes/TZ009-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ009-RECON.md",
+  "workers/developer/notes/TZ011-PROMPT-RUNBOOK.md",
+  "workers/developer/notes/TZ011-OWNER-SMOKE.md",
+  "workers/developer/notes/TZ011-SPIKE.md",
+  "tasks/008_LIVE-WEBRTC.md",
+  "tasks/009_LIVE-CS2-LOCAL.md",
+  "tasks/011_OBS-WHIP.md",
+  "apps/api/alembic/versions/0012_tournament_branding.py",
+  "apps/api/alembic/versions/0013_match_audit_log.py"
 )
 foreach ($rel in $required) {
   $p = Join-Path $Root $rel
@@ -55,7 +95,7 @@ foreach ($rel in $required) {
 Write-Host "OK artifacts"
 
 Write-Host ""
-Write-Host "[2/7] docker compose config (+ webrtc profile)" -ForegroundColor Cyan
+Write-Host "[2/7] docker compose config (webrtc and whip profiles)" -ForegroundColor Cyan
 $composeFile = "infra/platform/docker-compose.yml"
 docker compose --env-file .env -f $composeFile config --quiet
 if ($LASTEXITCODE -ne 0) {
@@ -65,7 +105,11 @@ docker compose --env-file .env -f $composeFile --profile webrtc config --quiet
 if ($LASTEXITCODE -ne 0) {
   throw "compose --profile webrtc config failed"
 }
-Write-Host "OK compose config (incl. coturn profile)"
+docker compose --env-file .env -f $composeFile --profile whip config --quiet
+if ($LASTEXITCODE -ne 0) {
+  throw "compose --profile whip config failed"
+}
+Write-Host "OK compose config (coturn + mediamtx profiles; containers need not be up)"
 
 Write-Host ""
 Write-Host "[3/7] pytest apps/api" -ForegroundColor Cyan
@@ -175,7 +219,7 @@ Invoke-NpmBuild "apps/judge"
 Write-Host "OK frontend builds"
 
 Write-Host ""
-Write-Host "[6/7] director-agent go test (+ fake-webrtc package)" -ForegroundColor Cyan
+Write-Host "[6/7] director-agent go test (+ fake-webrtc + live_track unit, no OBS)" -ForegroundColor Cyan
 $goCmd = Get-Command go -ErrorAction SilentlyContinue
 if (-not $goCmd) {
   $goExe = "C:\Program Files\Go\bin\go.exe"
@@ -205,20 +249,19 @@ finally {
 Write-Host "OK director-agent"
 
 Write-Host ""
-Write-Host "[7/7] alembic head present (0012 branding)" -ForegroundColor Cyan
-$mig = Join-Path $Root "apps/api/alembic/versions/0012_tournament_branding.py"
+Write-Host "[7/7] alembic artifacts (0013 audit + 0012 branding)" -ForegroundColor Cyan
+$mig = Join-Path $Root "apps/api/alembic/versions/0013_match_audit_log.py"
 if (-not (Test-Path $mig)) {
-  throw "missing alembic 0012_tournament_branding"
+  throw "missing alembic 0013_match_audit_log"
 }
-$migInvite = Join-Path $Root "apps/api/alembic/versions/0008_invite_tokens.py"
-if (-not (Test-Path $migInvite)) {
-  throw "missing alembic 0008_invite_tokens"
+$migBrand = Join-Path $Root "apps/api/alembic/versions/0012_tournament_branding.py"
+if (-not (Test-Path $migBrand)) {
+  throw "missing alembic 0012_tournament_branding"
 }
 Write-Host "OK migrations artifact"
 
 Write-Host ""
-Write-Host "VERIFY OK - TZ005 Tournament GATE (Fake match sufficient)" -ForegroundColor Green
-Write-Host "live_cs2 / live_webrtc = blocked (optional; see TZ005-OWNER-SMOKE)" -ForegroundColor Yellow
-Write-Host "Owner smoke: workers/developer/notes/TZ005-OWNER-SMOKE.md" -ForegroundColor Yellow
-Write-Host "Next: TZ006 Broadcast Slice" -ForegroundColor Yellow
+Write-Host "VERIFY OK - TZ010 Production Ready (Fake CI; live OBS/CS2/WHIP not required)" -ForegroundColor Green
+Write-Host "production_ready = gate_ready; @owner: TZ010-OWNER-SMOKE.md -> production_ready=done" -ForegroundColor Yellow
+Write-Host "Also open: TZ011 live_whip / TZ009 live_cs2_local; TL: Twitch or BestTvGU" -ForegroundColor Yellow
 exit 0

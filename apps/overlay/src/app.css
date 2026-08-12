@@ -1,15 +1,16 @@
-:root {
-  color-scheme: dark;
-  --ink: #f2f4f7;
-  --muted: rgba(242, 244, 247, 0.72);
-  --accent: #7dd3c0;
-  --danger: #f07178;
-  --panel: rgba(8, 12, 18, 0.55);
-  --font: "Segoe UI", "Trebuchet MS", sans-serif;
-}
+@import '@stk/ui-tokens/tokens.css';
 
-* {
-  box-sizing: border-box;
+/* OBS Browser Source: transparent canvas — do not paint stage wash on body */
+:root {
+  /* Translucent panels over game footage */
+  --panel: rgba(8, 9, 11, 0.62);
+  --panel-strong: rgba(8, 9, 11, 0.78);
+  --edge: var(--border-strong);
+  --edge-soft: var(--border);
+  --faint: var(--text-dim);
+  --ink: var(--text);
+  --muted: var(--text-muted);
+  --shadow-panel: var(--shadow);
 }
 
 html,
@@ -19,12 +20,110 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: transparent;
+  background: transparent !important;
   font-family: var(--font);
-  color: var(--ink);
+  color: var(--text);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  /* OBS Browser Source: transparent canvas */
-  background: transparent;
+body::before {
+  display: none !important;
+}
+
+/* Shared scene primitives */
+.ov-panel {
+  position: relative;
+  background: var(--panel);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--edge-soft);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.ov-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, var(--accent-muted), transparent 42%),
+    repeating-linear-gradient(
+      -18deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 248, 235, 0.015) 10px,
+      rgba(255, 248, 235, 0.015) 11px
+    );
+  pointer-events: none;
+}
+
+.ov-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ov-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-primary, var(--accent));
+}
+
+.ov-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.ov-enter {
+  animation: ov-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ov-enter-late {
+  animation: ov-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+@keyframes ov-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ov-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes ov-score-tick {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-enter,
+  .ov-enter-late,
+  .ov-panel,
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

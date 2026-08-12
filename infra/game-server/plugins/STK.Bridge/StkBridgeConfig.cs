@@ -11,7 +11,7 @@ public sealed class StkBridgeConfig
     public string MatchId { get; set; } = "m_dev";
     public string ServerId { get; set; } = "srv_dev";
     public string ProtocolVersion { get; set; } = "1";
-    public string BridgeVersion { get; set; } = "0.1.0";
+    public string BridgeVersion { get; set; } = "0.2.0";
     public int HeartbeatIntervalSeconds { get; set; } = 15;
     public string CommandListenHost { get; set; } = "127.0.0.1";
     public int CommandListenPort { get; set; } = 27099;

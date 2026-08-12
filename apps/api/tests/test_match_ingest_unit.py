@@ -54,6 +54,29 @@ def test_out_of_order_does_not_overwrite_score() -> None:
     assert match.score_team_a == 2
 
 
+def test_sequence_rewind_after_bridge_restart_applies() -> None:
+    """Bridge restart resets counter (371 → 12); must not drop live score events."""
+    match = Match(
+        id="m1",
+        tournament_id="t1",
+        last_sequence=371,
+        score_team_a=0,
+        score_team_b=1,
+        round_number=2,
+    )
+    result = apply_game_event(
+        match,
+        event_type="round_end",
+        sequence=12,
+        payload={"round": 3, "score": {"team_a": 0, "team_b": 2}},
+    )
+    assert result.applied
+    assert match.score_team_b == 2
+    assert match.round_number == 3
+    assert match.last_sequence == 12
+    assert match.reconcile_needed is True
+
+
 def test_ingest_happy_path_and_duplicate_event_id() -> None:
     uow = InMemoryUnitOfWork()
     match = create_match(

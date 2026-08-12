@@ -1,10 +1,11 @@
-# STK dev stack - remote MySQL + API + Vite apps + optional Director Agent
+# STK dev stack - remote MySQL + API + Vite apps + optional Director Agent + MediaMTX
 # Usage (from repo root or scripts/):
 #   .\scripts\dev-remote.ps1
 #   .\scripts\dev-remote.ps1 -MatchId m_live
 #   .\scripts\dev-remote.ps1 -ApiOnly
 #   .\scripts\dev-remote.ps1 -ObsPassword "your_obs_ws_password"   # real OBS instead of --fake-obs
 #   .\scripts\dev-remote.ps1 -SkipAgent                              # no agent window
+#   .\scripts\dev-remote.ps1 -SkipMediamtx                           # no WHIP/WHEP (Docker MediaMTX)
 #
 # Requires root .env with remote MYSQL_* (not MYSQL_HOST=mysql). MYSQL_SSL=1 for Timeweb.
 
@@ -15,6 +16,7 @@ param(
     [switch]$SkipMigrate,
     [switch]$AllowLocalDb,
     [switch]$SkipAgent,
+    [switch]$SkipMediamtx,
     [string]$ObsPassword = ""
 )
 
@@ -180,11 +182,45 @@ function Start-ViteDev {
     Write-Host ("Started {0} window" -f $Label) -ForegroundColor Green
 }
 
+function Start-Mediamtx {
+    $composeFile = Join-Path $Root "infra/platform/docker-compose.yml"
+    $webrtcPort = if ($env:MEDIAMTX_WEBRTC_PORT) { $env:MEDIAMTX_WEBRTC_PORT.Trim() } else { "8889" }
+    $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
+    if (-not $dockerCmd) {
+        Write-Host "WARN: Docker not in PATH — MediaMTX skipped (WHEP on :$webrtcPort will refuse)." -ForegroundColor Yellow
+        Write-Host "  Install Docker Desktop, then re-run or:" -ForegroundColor DarkGray
+        Write-Host "  docker compose --env-file .env -f infra/platform/docker-compose.yml --profile whip up -d mediamtx" -ForegroundColor DarkGray
+        return $false
+    }
+    Write-Host "MediaMTX (WHIP/WHEP :$webrtcPort) ..." -ForegroundColor Cyan
+    Push-Location $Root
+    try {
+        docker compose --env-file $EnvFile -f $composeFile --profile whip up -d mediamtx
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "WARN: MediaMTX compose failed (exit $LASTEXITCODE). /watch WHEP needs :$webrtcPort." -ForegroundColor Yellow
+            return $false
+        }
+    }
+    finally {
+        Pop-Location
+    }
+    Write-Host ("OK MediaMTX  http://127.0.0.1:{0}/stk/<matchId>/whep" -f $webrtcPort) -ForegroundColor Green
+    return $true
+}
+
 Write-Host ""
 Write-Host "== STK dev-remote ==" -ForegroundColor Cyan
 $mysqlPort = if ($env:MYSQL_PORT) { $env:MYSQL_PORT } else { "3306" }
 $mysqlDb = if ($env:MYSQL_DATABASE) { $env:MYSQL_DATABASE } else { "stk" }
 Write-Host ("MySQL: {0}:{1}/{2}" -f $mysqlHost, $mysqlPort, $mysqlDb)
+
+$mediamtxUp = $false
+if (-not $SkipMediamtx) {
+    $mediamtxUp = Start-Mediamtx
+}
+else {
+    Write-Host "MediaMTX skipped (-SkipMediamtx)" -ForegroundColor DarkGray
+}
 
 $apiRunner = New-RunnerScript -Name "stk-api" -WorkDir $apiDir -Commands @(
     "Write-Host 'API uvicorn :$apiPort (reload)' -ForegroundColor Cyan"
@@ -202,15 +238,26 @@ if (-not $ApiOnly) {
         $agentToken = if ($env:STK_AGENT_TOKEN) { $env:STK_AGENT_TOKEN } else { "dev_agent_token_change_me" }
         $agentExe = Ensure-DirectorAgentExe
         $platformUrl = "http://127.0.0.1:$apiPort"
-        $agentCmd = "& '$agentExe' --platform '$platformUrl' --match '$MatchId' --token '$agentToken' --fake-webrtc"
-        if ($ObsPassword) {
-            $escapedObs = $ObsPassword -replace "'", "''"
-            $agentCmd += " --obs-password '$escapedObs'"
-            $agentMode = "OBS WebSocket + fake-webrtc"
+        $obsPass = $ObsPassword
+        if ([string]::IsNullOrWhiteSpace($obsPass) -and -not [string]::IsNullOrWhiteSpace($env:STK_OBS_PASSWORD)) {
+            $obsPass = $env:STK_OBS_PASSWORD
+        }
+        $obsUrl = if (-not [string]::IsNullOrWhiteSpace($env:STK_OBS_URL)) {
+            $env:STK_OBS_URL.Trim()
+        } else {
+            "ws://127.0.0.1:4455"
+        }
+        $agentCmd = "& '$agentExe' --platform '$platformUrl' --match '$MatchId' --token '$agentToken'"
+        if (-not [string]::IsNullOrWhiteSpace($obsPass)) {
+            $escapedObs = $obsPass -replace "'", "''"
+            $escapedUrl = $obsUrl -replace "'", "''"
+            # Real OBS: scenes only. Live /watch = WHIP (not --live-webrtc / not silent fake-webrtc).
+            $agentCmd += " --obs-url '$escapedUrl' --obs-password '$escapedObs'"
+            $agentMode = "OBS WebSocket scenes only (WHIP for /watch)"
         }
         else {
-            $agentCmd += " --fake-obs"
-            $agentMode = "fake-obs + fake-webrtc"
+            $agentCmd += " --fake-obs --fake-webrtc"
+            $agentMode = "fake-obs + fake-webrtc (set STK_OBS_PASSWORD for real OBS; /watch?media=fake)"
         }
         $agentRunner = New-RunnerScript -Name "stk-agent" -WorkDir $agentDir -Commands @(
             "Write-Host 'Director Agent ($agentMode) match=$MatchId' -ForegroundColor Cyan"
@@ -234,9 +281,22 @@ if (-not $ApiOnly) {
     Write-Host ("  admin    {0}/admin  (login: {1})" -f $dashboardOrigin, $organizerUser)
     Write-Host ("  overlay  {0}/overlay/{1}" -f $watchOrigin, $MatchId)
     Write-Host ("  director {0}/director/{1}" -f $dashboardOrigin, $MatchId)
-    Write-Host ("  watch    {0}/watch?token=<commentator_invite>" -f $watchOrigin)
+    Write-Host ("  watch    {0}/watch?token=<commentator_invite>  (default WHEP; Fake: &media=fake)" -f $watchOrigin)
     Write-Host ("  judge    {0}/?token=<judge_invite>" -f $judgeOrigin)
 }
+Write-Host ""
+Write-Host "WHIP (live commentators, TZ011):" -ForegroundColor Cyan
+$webrtcPort = if ($env:MEDIAMTX_WEBRTC_PORT) { $env:MEDIAMTX_WEBRTC_PORT.Trim() } else { "8889" }
+if ($mediamtxUp) {
+    Write-Host ("  MediaMTX up  http://127.0.0.1:{0}/stk/<matchId>/whep" -f $webrtcPort)
+}
+else {
+    Write-Host "  docker compose --env-file .env -f infra/platform/docker-compose.yml --profile whip up -d mediamtx"
+    if ($SkipMediamtx) {
+        Write-Host "  (skipped via -SkipMediamtx)"
+    }
+}
+Write-Host ("  POST http://127.0.0.1:{0}/api/v1/matches/{1}/whip-publish  (organizer Bearer) → OBS WHIP" -f $apiPort, $MatchId)
 Write-Host ""
 Write-Host "Create match (if needed):" -ForegroundColor DarkGray
 Write-Host ("  POST http://127.0.0.1:{0}/api/v1/matches" -f $apiPort) -ForegroundColor DarkGray
@@ -250,5 +310,5 @@ if ($ApiOnly -or $SkipAgent) {
     Write-Host "  # real OBS: drop --fake-obs, add --obs-password ..." -ForegroundColor DarkGray
 }
 Write-Host ""
-Write-Host "Flags: -ApiOnly -SkipMigrate -SkipAgent -ObsPassword ... -AllowLocalDb" -ForegroundColor DarkGray
-Write-Host "Stop: close the opened PowerShell windows (Ctrl+C in each)." -ForegroundColor Yellow
+Write-Host "Flags: -ApiOnly -SkipMigrate -SkipAgent -SkipMediamtx -ObsPassword ... -AllowLocalDb" -ForegroundColor DarkGray
+Write-Host "Stop: close the opened PowerShell windows (Ctrl+C in each). MediaMTX: docker compose ... --profile whip stop mediamtx" -ForegroundColor Yellow

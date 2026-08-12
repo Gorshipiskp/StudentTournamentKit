@@ -1,4 +1,4 @@
-# install-local-cs2-plugins.ps1 — Metamod + CSS + MatchZy + STK.Bridge on @owner Windows CS2 DS
+# install-local-cs2-plugins.ps1 - Metamod + CSS + MatchZy + STK.Bridge on @owner Windows CS2 DS
 # Usage:
 #   .\scripts\install-local-cs2-plugins.ps1
 #   .\scripts\install-local-cs2-plugins.ps1 -Cs2Root "Z:\cs2_dedicated_server\steamapps\common\Counter-Strike Global Offensive"
@@ -66,7 +66,7 @@ function Patch-GameInfo {
     1
   )
   if ($patched -eq $content) {
-    throw "gameinfo.gi patch failed — add manually: Game csgo/addons/metamod after Game_LowViolence"
+    throw "gameinfo.gi patch failed - add manually: Game csgo/addons/metamod after Game_LowViolence"
   }
   try {
     Set-Content -Path $GameInfo -Value $patched -NoNewline -Encoding utf8
@@ -109,11 +109,11 @@ Write-Step "1/5 Metamod:Source 2.0 (build 1410)"
 Download-File $MetamodUrl (Join-Path $TempDir "metamod.zip")
 Expand-ZipToCsgo (Join-Path $TempDir "metamod.zip")
 
-Write-Step "2/5 CounterStrikeSharp 1.0.371 (with-runtime, Windows)"
+Write-Step "2/5 CounterStrikeSharp 1.0.371 with-runtime Windows"
 Download-File $CssUrl (Join-Path $TempDir "css.zip")
 Expand-ZipToCsgo (Join-Path $TempDir "css.zip")
 
-Write-Step "3/5 MatchZy 0.8.15 (plugin only)"
+Write-Step "3/5 MatchZy 0.8.15 plugin only"
 Download-File $MatchZyUrl (Join-Path $TempDir "matchzy.zip")
 Expand-ZipToCsgo (Join-Path $TempDir "matchzy.zip")
 
@@ -126,12 +126,12 @@ Install-Bridge
 
 Write-Host ""
 Write-Host "INSTALL OK" -ForegroundColor Green
-Write-Host "Versions: Metamod git1410 | CSS 1.0.371 | MatchZy 0.8.15 | STK.Bridge (local build)"
+Write-Host "Versions: Metamod git1410 | CSS 1.0.371 | MatchZy 0.8.15 | STK.Bridge local build"
 Write-Host ""
 Write-Host "Next:"
-Write-Host "  1) Restart server: start-dedicated-competitive.bat (MatchZy = competitive)"
-Write-Host "  2) Console: meta list   (expect CounterStrikeSharp + plugins)"
+Write-Host "  1) Restart server: start-dedicated-competitive.bat"
+Write-Host "  2) Console: meta list"
 Write-Host "  3) Edit STK.Bridge config.json WebhookSecret to match .env CS2_WEBHOOK_SECRET"
-Write-Host "  4) Platform API up -> register game-server (infra/game-server/README.md)"
+Write-Host "  4) Platform API up - register game-server - see infra/game-server/README.md"
 Write-Host ""
-Write-Host "Note: STK.Bridge is skeleton — full MatchZy hooks not wired yet (TZ002)."
+Write-Host "Note: STK.Bridge MatchZy hooks are partial - see TZ002."

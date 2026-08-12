@@ -23,6 +23,7 @@ from app.presentation.http.routers import (
     teams,
     tournaments,
     turn,
+    whip,
 )
 from app.presentation.ws import agent as agent_ws
 from app.presentation.ws import judge as judge_ws
@@ -57,6 +58,7 @@ app.include_router(branding.router)
 app.include_router(matches.router)
 app.include_router(invites.router)
 app.include_router(turn.router)
+app.include_router(whip.router)
 app.include_router(game_servers.router)
 app.include_router(internal_cs2.router)
 app.include_router(overlay_ws.router)
