@@ -27,13 +27,37 @@ def build_database_url() -> str:
     )
 
 
+def build_connect_args() -> dict:
+    """TLS for managed MySQL with require_secure_transport=ON."""
+    flag = os.getenv("MYSQL_SSL", "").strip().lower()
+    if flag not in ("1", "true", "yes", "required"):
+        return {}
+
+    import ssl
+
+    ctx = ssl.create_default_context()
+    ca_path = os.getenv("MYSQL_SSL_CA", "").strip()
+    if ca_path:
+        ctx.load_verify_locations(ca_path)
+    return {"ssl": ctx}
+
+
+def create_db_engine(*, poolclass=None) -> Engine:
+    kwargs: dict = {
+        "pool_pre_ping": True,
+        "pool_recycle": 3600,
+    }
+    connect_args = build_connect_args()
+    if connect_args:
+        kwargs["connect_args"] = connect_args
+    if poolclass is not None:
+        kwargs["poolclass"] = poolclass
+    return create_engine(build_database_url(), **kwargs)
+
+
 @lru_cache(maxsize=1)
 def get_engine() -> Engine:
-    return create_engine(
-        build_database_url(),
-        pool_pre_ping=True,
-        pool_recycle=3600,
-    )
+    return create_db_engine()
 
 
 def reset_engine_cache() -> None:

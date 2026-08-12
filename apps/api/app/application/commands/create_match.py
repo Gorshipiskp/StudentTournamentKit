@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from app.application.commands.rebuild_overlay import seed_overlay_and_production
 from app.application.unit_of_work import UnitOfWork
 from app.domain.match.entities import MATCH_SCHEDULED, MATCH_SERVER_ASSIGNED, Match
 
@@ -17,6 +18,7 @@ def create_match(
     webhook_secret: str | None = None,
     map_name: str | None = None,
     game_endpoint_url: str | None = None,
+    commit: bool = True,
 ) -> Match:
     tid = tournament_id or str(uuid4())
     # Ensure tournament exists for FK (flush before match insert on SQLAlchemy)
@@ -43,5 +45,10 @@ def create_match(
         game_endpoint_url=game_endpoint_url,
     )
     uow.matches.add(match)
-    uow.commit()
+    flush = getattr(uow, "flush", None)
+    if callable(flush):
+        flush()
+    seed_overlay_and_production(uow, match)
+    if commit:
+        uow.commit()
     return match

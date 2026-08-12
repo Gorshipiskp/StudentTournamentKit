@@ -2,51 +2,41 @@
 
 | Поле | Значение |
 |------|----------|
-| **ID** | TZ002 |
+| **ID** | TZ005 |
 | **От** | @team-lead |
-| **Статус** | **done** (primary GATE) |
+| **Статус** | **done** (GATE 2026-08-12) |
 | **Исполнитель** | workers/developer/ |
 
 ## Цель
 
-Game Slice: контракт CS2 ↔ Platform, Fake Game Server, match/judge/commands, скелет STK.Bridge + deploy scripts — GATE по tasks/002_GAME-SLICE.md.
+Tournament Slice: organizer admin, teams, bracket, branding, invites из UI — GATE по tasks/005_TOURNAMENT-SLICE.md.
 
 ## Scope
 
-**Делать:**
+**Делать:** P1…P7 по `workers/developer/notes/TZ005-PROMPT-RUNBOOK.md` (1 чат = 1 промпт)
 
-- Промпты 1…M по `workers/developer/notes/TZ002-PROMPT-RUNBOOK.md`
-- 1 чат = 1 промпт
-
-**Не трогать:**
-
-- Overlay UI / Director Agent / WebRTC / OBS (TZ003+)
-- Коммиты без @owner
-- Live VPS без явного доступа владельца (live smoke — optional / blocked)
+**Не трогать:** Broadcast delay; BestTvGU; auto-seeding; коммиты без @owner
 
 ## Критерии готовности
 
-- [x] Все P done в трекере ранбука
-- [x] §5 ТЗ 002 (primary GATE на Fake)
-- [x] Live 5v5 — documented `live_smoke=blocked` (нет VPS)
+- [x] Трекер P1–P7 done
+- [x] §5 Primary GATE
+- [x] Owner smoke (инструкция + verify)
 
 ## Контекст
 
-- `tasks/002_GAME-SLICE.md`
-- `workers/developer/notes/TZ002-PROMPT-RUNBOOK.md`
-- `workers/developer/notes/TZ002-OWNER-SMOKE.md`
-- `docs/INVARIANTS.md`, `docs/ARCHITECTURE.md` §10–11
+- `tasks/005_TOURNAMENT-SLICE.md`
+- `workers/developer/notes/TZ005-PROMPT-RUNBOOK.md`
+- TZ002–004: matches, overlay, invites, dashboard director
 
 ## Журнал задачи
 
 | Дата | Запись |
 |------|--------|
-| 2026-08-11 | TZ002 P8 GATE done — A–E + verify; live_smoke=blocked; стоп → TZ003 / @owner commit |
-| 2026-08-11 | TZ002 P7 done — deploy-cs2 + durable demo; next P8 GATE (новый чат) |
-| 2026-08-11 | TZ002 P6 done — Bridge skeleton + build blocker; next P7 deploy (новый чат) |
-| 2026-08-11 | TZ002 P5 done — registry + reconcile; next P6 Bridge (новый чат) |
-| 2026-08-11 | TZ002 P4 done — judge review E2E Fake; next P5 registry (новый чат) |
-| 2026-08-11 | TZ002 P3 done — commands + ack/desired-actual; next P4 judge (новый чат) |
-| 2026-08-11 | TZ002 P2 done — ingest HMAC + Match FSM; next P3 commands (новый чат) |
-| 2026-08-11 | TZ002 P1 done — CONTRACT + fake-cs2; next P2 ingest/FSM (новый чат) |
-| 2026-08-11 | TZ001 закрыт; старт TZ002 |
+| 2026-08-12 | **GATE closed** — verify OK TZ005; OWNER-SMOKE; live_cs2/live_webrtc=blocked; next TZ006 |
+| 2026-08-12 | P6 done — wizard + multi-tournament smoke; следующий P7 GATE |
+| 2026-08-12 | P5 done — Fake start + staff links; следующий P6 polish |
+| 2026-08-12 | P4 done — branding → overlay; следующий P5 invites/start |
+| 2026-08-12 | P3 done — bracket generate/assign + match_id; следующий P4 branding |
+| 2026-08-12 | P2 done — teams/players API + UI; следующий P3 bracket |
+| 2026-08-12 | P1 done — auth + tournament CRUD + `/admin`; следующий P2 teams |

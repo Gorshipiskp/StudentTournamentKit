@@ -65,13 +65,34 @@ services:
     depends_on:
       - api
 
-  # WebRTC TURN — не нужен для GATE Foundation. Включить: --profile webrtc
-  # coturn:
-  #   profiles: ["webrtc"]
-  #   image: coturn/coturn:4.6
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   command: ["-n", "--log-file=stdout", "--listening-port=3478"]
+  # WebRTC TURN — optional: docker compose --profile webrtc up -d
+  coturn:
+    profiles: ["webrtc"]
+    image: coturn/coturn:4.6
+    restart: unless-stopped
+    ports:
+      - "${TURN_PORT:-3478}:3478/tcp"
+      - "${TURN_PORT:-3478}:3478/udp"
+      - "49160-49170:49160-49170/udp"
+    environment:
+      TURN_SECRET: ${TURN_SECRET:-dev_turn_secret_change_me}
+      TURN_REALM: ${TURN_REALM:-stk.local}
+    command:
+      - "-n"
+      - "--log-file=stdout"
+      - "--listening-port=3478"
+      - "--fingerprint"
+      - "--lt-cred-mech"
+      - "--use-auth-secret"
+      - "--static-auth-secret=${TURN_SECRET:-dev_turn_secret_change_me}"
+      - "--realm=${TURN_REALM:-stk.local}"
+      - "--min-port=49160"
+      - "--max-port=49170"
+      - "--no-cli"
+      - "--no-tls"
+      - "--no-dtls"
+      - "--no-multicast-peers"
+      - "--no-stdout-timestamps"
 
 volumes:
   mysql_data:

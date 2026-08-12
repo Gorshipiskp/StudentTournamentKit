@@ -77,12 +77,26 @@ def test_failure_A_platform_restart_then_reconcile() -> None:
     assert repaired.reconcile_needed is False
 
 
-def test_failure_B_agent_restart_documented_skip() -> None:
-    """B: Director Agent restart — out of Game Slice (Production TZ003)."""
-    pytest.skip(
-        "Failure B (Agent restart) is N/A for TZ002 Game Slice; "
-        "covered in Production Slice (Director Agent reconciler)."
+def test_failure_B_agent_restart_covered_by_director_agent() -> None:
+    """B: Agent restart → apply desired, not command history (A12) — TZ003."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[3]
+    reconciler_test = (
+        root
+        / "apps"
+        / "director-agent"
+        / "internal"
+        / "application"
+        / "reconciler_test.go"
     )
+    assert reconciler_test.is_file(), (
+        "Failure B requires apps/director-agent reconciler tests "
+        "(TestRestartAppliesDesiredNotHistory)"
+    )
+    src = reconciler_test.read_text(encoding="utf-8")
+    assert "TestRestartAppliesDesiredNotHistory" in src
+    assert "ApplyDesired" in src
 
 
 def test_failure_C_duplicate_webhook_no_double_score() -> None:

@@ -10,10 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.domain.demo.entities import DemoFile
 from app.domain.game_server.entities import GameServer
+from app.domain.identity.entities import InviteToken
 from app.domain.match.entities import Match
 from app.domain.match.game_command import GameCommand
+from app.domain.overlay.entities import OverlayState
+from app.domain.production.entities import ProductionSession
 from app.domain.shared.outbox import OutboxMessage
+from app.domain.tournament.bracket_entities import BracketNode as DomainBracketNode
+from app.domain.tournament.branding_entities import TournamentBranding as DomainBranding
 from app.domain.tournament.entities import Tournament
+from app.domain.tournament.team_entities import Player as DomainPlayer
+from app.domain.tournament.team_entities import Team as DomainTeam
 from app.infrastructure.persistence import models
 
 
@@ -60,23 +67,321 @@ def _write_match_row(row: models.Match, match: Match) -> None:
     row.game_endpoint_url = match.game_endpoint_url
 
 
+def _tournament_from_row(row: models.Tournament) -> Tournament:
+    settings = row.settings_json if isinstance(row.settings_json, dict) else {}
+    return Tournament(
+        id=row.id,
+        status=row.status,
+        name=row.name or "",
+        format=row.format or "single_elim",
+        settings_json=dict(settings),
+    )
+
+
+def _write_tournament_row(row: models.Tournament, tournament: Tournament) -> None:
+    row.status = tournament.status
+    row.name = tournament.name
+    row.format = tournament.format
+    row.settings_json = dict(tournament.settings_json)
+
+
 class SqlAlchemyTournamentRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
     def add(self, tournament: Tournament) -> None:
-        self._session.add(
-            models.Tournament(
-                id=tournament.id,
-                status=tournament.status,
-            )
-        )
+        row = models.Tournament(id=tournament.id)
+        _write_tournament_row(row, tournament)
+        self._session.add(row)
 
     def get(self, tournament_id: str) -> Tournament | None:
         row = self._session.get(models.Tournament, tournament_id)
         if row is None:
             return None
-        return Tournament(id=row.id, status=row.status)
+        return _tournament_from_row(row)
+
+    def save(self, tournament: Tournament) -> None:
+        row = self._session.get(models.Tournament, tournament.id)
+        if row is None:
+            raise KeyError(f"tournament not found: {tournament.id}")
+        _write_tournament_row(row, tournament)
+
+    def list(self, *, limit: int = 100) -> list[Tournament]:
+        rows = self._session.scalars(
+            select(models.Tournament)
+            .order_by(models.Tournament.created_at.desc())
+            .limit(limit)
+        ).all()
+        return [_tournament_from_row(r) for r in rows]
+
+
+def _team_from_row(row: models.Team) -> DomainTeam:
+    return DomainTeam(
+        id=row.id,
+        tournament_id=row.tournament_id,
+        name=row.name,
+        tag=row.tag or "",
+    )
+
+
+def _player_from_row(row: models.Player) -> DomainPlayer:
+    return DomainPlayer(
+        id=row.id,
+        team_id=row.team_id,
+        nickname=row.nickname,
+        steam_id=row.steam_id,
+        is_coach=bool(row.is_coach),
+    )
+
+
+class SqlAlchemyTeamRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, team: DomainTeam) -> None:
+        self._session.add(
+            models.Team(
+                id=team.id,
+                tournament_id=team.tournament_id,
+                name=team.name,
+                tag=team.tag,
+            )
+        )
+
+    def get(self, team_id: str) -> DomainTeam | None:
+        row = self._session.get(models.Team, team_id)
+        if row is None:
+            return None
+        return _team_from_row(row)
+
+    def save(self, team: DomainTeam) -> None:
+        row = self._session.get(models.Team, team.id)
+        if row is None:
+            raise KeyError(f"team not found: {team.id}")
+        row.name = team.name
+        row.tag = team.tag
+        row.tournament_id = team.tournament_id
+
+    def delete(self, team_id: str) -> None:
+        row = self._session.get(models.Team, team_id)
+        if row is None:
+            raise KeyError(f"team not found: {team_id}")
+        self._session.delete(row)
+
+    def list_for_tournament(self, tournament_id: str) -> list[DomainTeam]:
+        rows = self._session.scalars(
+            select(models.Team)
+            .where(models.Team.tournament_id == tournament_id)
+            .order_by(models.Team.created_at.asc())
+        ).all()
+        return [_team_from_row(r) for r in rows]
+
+    def find_by_name(self, tournament_id: str, name: str) -> DomainTeam | None:
+        row = self._session.scalars(
+            select(models.Team).where(
+                models.Team.tournament_id == tournament_id,
+                models.Team.name == name,
+            )
+        ).first()
+        if row is None:
+            return None
+        return _team_from_row(row)
+
+    def count_for_tournament(self, tournament_id: str) -> int:
+        from sqlalchemy import func
+
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(models.Team)
+                .where(models.Team.tournament_id == tournament_id)
+            )
+            or 0
+        )
+
+
+class SqlAlchemyPlayerRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, player: DomainPlayer) -> None:
+        self._session.add(
+            models.Player(
+                id=player.id,
+                team_id=player.team_id,
+                nickname=player.nickname,
+                steam_id=player.steam_id,
+                is_coach=player.is_coach,
+            )
+        )
+
+    def get(self, player_id: str) -> DomainPlayer | None:
+        row = self._session.get(models.Player, player_id)
+        if row is None:
+            return None
+        return _player_from_row(row)
+
+    def save(self, player: DomainPlayer) -> None:
+        row = self._session.get(models.Player, player.id)
+        if row is None:
+            raise KeyError(f"player not found: {player.id}")
+        row.nickname = player.nickname
+        row.steam_id = player.steam_id
+        row.is_coach = player.is_coach
+        row.team_id = player.team_id
+
+    def delete(self, player_id: str) -> None:
+        row = self._session.get(models.Player, player_id)
+        if row is None:
+            raise KeyError(f"player not found: {player_id}")
+        self._session.delete(row)
+
+    def list_for_team(self, team_id: str) -> list[DomainPlayer]:
+        rows = self._session.scalars(
+            select(models.Player)
+            .where(models.Player.team_id == team_id)
+            .order_by(models.Player.created_at.asc())
+        ).all()
+        return [_player_from_row(r) for r in rows]
+
+    def delete_for_team(self, team_id: str) -> None:
+        rows = self._session.scalars(
+            select(models.Player).where(models.Player.team_id == team_id)
+        ).all()
+        for row in rows:
+            self._session.delete(row)
+
+    def count_for_team(self, team_id: str) -> int:
+        from sqlalchemy import func
+
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(models.Player)
+                .where(models.Player.team_id == team_id)
+            )
+            or 0
+        )
+
+
+def _bracket_from_row(row: models.BracketNode) -> DomainBracketNode:
+    return DomainBracketNode(
+        id=row.id,
+        tournament_id=row.tournament_id,
+        round=row.round,
+        position=row.position,
+        team_a_id=row.team_a_id,
+        team_b_id=row.team_b_id,
+        source_a_node_id=row.source_a_node_id,
+        source_b_node_id=row.source_b_node_id,
+        match_id=row.match_id,
+    )
+
+
+class SqlAlchemyBracketNodeRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, node: DomainBracketNode) -> None:
+        self._session.add(
+            models.BracketNode(
+                id=node.id,
+                tournament_id=node.tournament_id,
+                round=node.round,
+                position=node.position,
+                team_a_id=node.team_a_id,
+                team_b_id=node.team_b_id,
+                source_a_node_id=node.source_a_node_id,
+                source_b_node_id=node.source_b_node_id,
+                match_id=node.match_id,
+            )
+        )
+
+    def get(self, node_id: str) -> DomainBracketNode | None:
+        row = self._session.get(models.BracketNode, node_id)
+        if row is None:
+            return None
+        return _bracket_from_row(row)
+
+    def save(self, node: DomainBracketNode) -> None:
+        row = self._session.get(models.BracketNode, node.id)
+        if row is None:
+            raise KeyError(f"bracket node not found: {node.id}")
+        row.team_a_id = node.team_a_id
+        row.team_b_id = node.team_b_id
+        row.source_a_node_id = node.source_a_node_id
+        row.source_b_node_id = node.source_b_node_id
+        row.match_id = node.match_id
+        row.round = node.round
+        row.position = node.position
+
+    def list_for_tournament(self, tournament_id: str) -> list[DomainBracketNode]:
+        rows = self._session.scalars(
+            select(models.BracketNode)
+            .where(models.BracketNode.tournament_id == tournament_id)
+            .order_by(models.BracketNode.round.asc(), models.BracketNode.position.asc())
+        ).all()
+        return [_bracket_from_row(r) for r in rows]
+
+    def delete_for_tournament(self, tournament_id: str) -> None:
+        rows = self._session.scalars(
+            select(models.BracketNode).where(
+                models.BracketNode.tournament_id == tournament_id
+            )
+        ).all()
+        for row in rows:
+            self._session.delete(row)
+
+    def count_for_tournament(self, tournament_id: str) -> int:
+        from sqlalchemy import func
+
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(models.BracketNode)
+                .where(models.BracketNode.tournament_id == tournament_id)
+            )
+            or 0
+        )
+
+
+class SqlAlchemyBrandingRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, tournament_id: str) -> DomainBranding | None:
+        row = self._session.get(models.TournamentBranding, tournament_id)
+        if row is None:
+            return None
+        colors = row.colors_json if isinstance(row.colors_json, dict) else {}
+        return DomainBranding(
+            tournament_id=row.tournament_id,
+            colors_json=dict(colors),
+            logo_blob=bytes(row.logo_blob) if row.logo_blob is not None else None,
+            logo_content_type=row.logo_content_type,
+            bg_blob=bytes(row.bg_blob) if row.bg_blob is not None else None,
+            bg_content_type=row.bg_content_type,
+        )
+
+    def upsert(self, branding: DomainBranding) -> None:
+        row = self._session.get(models.TournamentBranding, branding.tournament_id)
+        if row is None:
+            self._session.add(
+                models.TournamentBranding(
+                    tournament_id=branding.tournament_id,
+                    colors_json=dict(branding.colors_json),
+                    logo_blob=branding.logo_blob,
+                    logo_content_type=branding.logo_content_type,
+                    bg_blob=branding.bg_blob,
+                    bg_content_type=branding.bg_content_type,
+                )
+            )
+            return
+        row.colors_json = dict(branding.colors_json)
+        row.logo_blob = branding.logo_blob
+        row.logo_content_type = branding.logo_content_type
+        row.bg_blob = branding.bg_blob
+        row.bg_content_type = branding.bg_content_type
 
 
 class SqlAlchemyMatchRepository:
@@ -285,6 +590,91 @@ class SqlAlchemyDemoFileRepository:
         ]
 
 
+class SqlAlchemyOverlayStateRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, match_id: str) -> OverlayState | None:
+        row = self._session.get(models.OverlayState, match_id)
+        if row is None:
+            return None
+        return OverlayState(
+            match_id=row.match_id,
+            revision=row.revision,
+            scene=row.scene,
+            data=dict(row.data_json or {}),
+            manual_overrides=dict(row.manual_overrides or {}),
+        )
+
+    def add(self, state: OverlayState) -> None:
+        self._session.add(
+            models.OverlayState(
+                match_id=state.match_id,
+                revision=state.revision,
+                scene=state.scene,
+                data_json=state.data,
+                manual_overrides=state.manual_overrides or None,
+            )
+        )
+
+    def save(self, state: OverlayState) -> None:
+        row = self._session.get(models.OverlayState, state.match_id)
+        if row is None:
+            self.add(state)
+            return
+        row.revision = state.revision
+        row.scene = state.scene
+        row.data_json = state.data
+        row.manual_overrides = state.manual_overrides or None
+
+
+class SqlAlchemyProductionSessionRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, match_id: str) -> ProductionSession | None:
+        row = self._session.get(models.ProductionSession, match_id)
+        if row is None:
+            return None
+        return ProductionSession(
+            match_id=row.match_id,
+            desired_scene=row.desired_scene,
+            actual_scene=row.actual_scene,
+            desired_stream=row.desired_stream,
+            actual_stream=row.actual_stream,
+            agent_status=row.agent_status,
+            obs_status=row.obs_status,
+            broadcast_status=row.broadcast_status,
+        )
+
+    def add(self, session: ProductionSession) -> None:
+        self._session.add(
+            models.ProductionSession(
+                match_id=session.match_id,
+                desired_scene=session.desired_scene,
+                actual_scene=session.actual_scene,
+                desired_stream=session.desired_stream,
+                actual_stream=session.actual_stream,
+                agent_status=session.agent_status,
+                obs_status=session.obs_status,
+                broadcast_status=session.broadcast_status,
+            )
+        )
+
+    def save(self, session: ProductionSession) -> None:
+        row = self._session.get(models.ProductionSession, session.match_id)
+        if row is None:
+            self.add(session)
+            return
+        row.desired_scene = session.desired_scene
+        row.actual_scene = session.actual_scene
+        row.desired_stream = session.desired_stream
+        row.actual_stream = session.actual_stream
+        row.agent_status = session.agent_status
+        row.obs_status = session.obs_status
+        row.broadcast_status = session.broadcast_status
+
+
 class SqlAlchemyOutboxRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -327,3 +717,56 @@ class SqlAlchemyOutboxRepository:
         if row is None or row.processed_at is not None:
             return
         row.processed_at = when or datetime.now(UTC)
+
+
+def _invite_from_row(row: models.InviteToken) -> InviteToken:
+    return InviteToken(
+        id=row.id,
+        token_hash=row.token_hash,
+        role=row.role,
+        match_id=row.match_id,
+        expires_at=row.expires_at,
+        revoked_at=row.revoked_at,
+        created_at=row.created_at,
+    )
+
+
+class SqlAlchemyInviteTokenRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, invite: InviteToken) -> None:
+        self._session.add(
+            models.InviteToken(
+                id=invite.id,
+                token_hash=invite.token_hash,
+                role=invite.role,
+                match_id=invite.match_id,
+                expires_at=invite.expires_at,
+                revoked_at=invite.revoked_at,
+            )
+        )
+
+    def get(self, invite_id: str) -> InviteToken | None:
+        row = self._session.get(models.InviteToken, invite_id)
+        if row is None:
+            return None
+        return _invite_from_row(row)
+
+    def get_by_hash(self, token_hash: str) -> InviteToken | None:
+        row = self._session.scalars(
+            select(models.InviteToken).where(models.InviteToken.token_hash == token_hash)
+        ).first()
+        if row is None:
+            return None
+        return _invite_from_row(row)
+
+    def save(self, invite: InviteToken) -> None:
+        row = self._session.get(models.InviteToken, invite.id)
+        if row is None:
+            raise KeyError(f"invite not found: {invite.id}")
+        row.token_hash = invite.token_hash
+        row.role = invite.role
+        row.match_id = invite.match_id
+        row.expires_at = invite.expires_at
+        row.revoked_at = invite.revoked_at

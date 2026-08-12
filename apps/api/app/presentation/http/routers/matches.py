@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.application.commands.create_match import create_match
@@ -20,8 +20,21 @@ from app.application.commands.judge_review import (
     resolve_review,
 )
 from app.application.commands.reconcile_match import reconcile_match_from_snapshot
+from app.application.commands.rebuild_overlay import apply_overlay_override, get_overlay_message
+from app.application.commands.staff_links import create_match_staff_links
+from app.application.commands.start_match import MatchStartError, start_match_fake
+from app.application.commands.update_production import (
+    ProductionConflict,
+    get_production,
+    patch_production,
+)
+from app.domain.identity.caps import CAP_JUDGE_RESOLVE, CAP_JUDGE_REVIEW
+from app.domain.identity.entities import InviteSession
 from app.domain.match.game_command import TYPE_FORFEIT, TYPE_PAUSE, TYPE_RESUME
+from app.infrastructure.outbox.dispatcher import dispatch_pending
 from app.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
+from app.presentation.http.deps.invite_auth import require_match_caps
+from app.presentation.http.deps.organizer_auth import RequireOrganizer
 from app.presentation.http.middleware.correlation import get_correlation_id
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matches"])
@@ -55,6 +68,22 @@ class AssignServerBody(BaseModel):
     server_id: str
 
 
+class ProductionPatchBody(BaseModel):
+    desired_scene: str | None = None
+    desired_stream: str | None = None
+
+
+class OverlayOverrideBody(BaseModel):
+    team_a_name: str | None = None
+    team_b_name: str | None = None
+    score_team_a: int | None = None
+    score_team_b: int | None = None
+    map: str | None = None
+    round: int | None = None
+    judge_banner: str | None = None
+    clear: bool = False
+
+
 @router.post("")
 def post_match(body: CreateMatchBody) -> dict[str, Any]:
     try:
@@ -80,6 +109,104 @@ def get_match(match_id: str) -> dict[str, Any]:
     if match is None:
         raise HTTPException(status_code=404, detail="match not found")
     return match.to_public_dict()
+
+
+@router.post("/{match_id}/start")
+def post_match_start(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
+    """Fake/admin start — marks match live without CS2 VPS (TZ005 P5)."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = start_match_fake(
+                uow,
+                match_id=match_id,
+                correlation_id=get_correlation_id() or None,
+            )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except MatchStartError as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    except ProductionConflict as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    dispatch_pending()
+    return result
+
+
+@router.post("/{match_id}/staff-links")
+def post_staff_links(match_id: str, _session: RequireOrganizer) -> dict[str, Any]:
+    """Create judge + commentator invites and deep-link URLs for organizer."""
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            return create_match_staff_links(uow, match_id=match_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{match_id}/production")
+def get_match_production(match_id: str) -> dict[str, Any]:
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            body = get_production(uow, match_id=match_id)
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return body
+
+
+@router.patch("/{match_id}/production")
+def patch_match_production(
+    match_id: str, body: ProductionPatchBody
+) -> dict[str, Any]:
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = patch_production(
+                uow,
+                match_id=match_id,
+                desired_scene=body.desired_scene,
+                desired_stream=body.desired_stream,
+                correlation_id=get_correlation_id() or None,
+            )
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProductionConflict as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    dispatch_pending()
+    return result
+
+
+@router.get("/{match_id}/overlay")
+def get_match_overlay(match_id: str) -> dict[str, Any]:
+    """Current overlay.snapshot (full state, DB-backed version)."""
+    with SqlAlchemyUnitOfWork() as uow:
+        message = get_overlay_message(uow, match_id)
+        if message is None:
+            raise HTTPException(status_code=404, detail="match not found")
+        uow.commit()
+    return message
+
+
+@router.post("/{match_id}/overlay/override")
+def post_overlay_override(
+    match_id: str, body: OverlayOverrideBody
+) -> dict[str, Any]:
+    """Manual overlay override (director). Never talks to OBS."""
+    patch = body.model_dump(exclude_none=True, exclude={"clear"})
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            message = apply_overlay_override(
+                uow,
+                match_id=match_id,
+                patch=patch if not body.clear else None,
+                clear=body.clear,
+                correlation_id=get_correlation_id() or None,
+            )
+            uow.commit()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    dispatch_pending()
+    return message
 
 
 @router.get("/{match_id}/snapshot")
@@ -185,7 +312,10 @@ def post_forfeit(match_id: str, body: CommandBody) -> dict[str, Any]:
 
 
 @router.post("/{match_id}/judge/review-request")
-def post_review_request(match_id: str) -> dict[str, Any]:
+def post_review_request(
+    match_id: str,
+    _session: Annotated[InviteSession, Depends(require_match_caps(CAP_JUDGE_REVIEW))],
+) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
             match = request_review(uow, match_id=match_id)
@@ -193,11 +323,15 @@ def post_review_request(match_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except JudgeConflict as exc:
         raise HTTPException(status_code=409, detail=exc.message) from exc
+    dispatch_pending()
     return match.to_public_dict()
 
 
 @router.post("/{match_id}/judge/review-cancel")
-def post_review_cancel(match_id: str) -> dict[str, Any]:
+def post_review_cancel(
+    match_id: str,
+    _session: Annotated[InviteSession, Depends(require_match_caps(CAP_JUDGE_REVIEW))],
+) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
             match = cancel_review(uow, match_id=match_id)
@@ -205,14 +339,19 @@ def post_review_cancel(match_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except JudgeConflict as exc:
         raise HTTPException(status_code=409, detail=exc.message) from exc
+    dispatch_pending()
     return match.to_public_dict()
 
 
 @router.post("/{match_id}/judge/review-resolve")
-def post_review_resolve(match_id: str, body: ResolveBody) -> dict[str, Any]:
+def post_review_resolve(
+    match_id: str,
+    body: ResolveBody,
+    _session: Annotated[InviteSession, Depends(require_match_caps(CAP_JUDGE_RESOLVE))],
+) -> dict[str, Any]:
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            return resolve_review(
+            result = resolve_review(
                 uow,
                 match_id=match_id,
                 action=body.action,
@@ -226,3 +365,5 @@ def post_review_resolve(match_id: str, body: ResolveBody) -> dict[str, Any]:
         raise HTTPException(status_code=409, detail=exc.message) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    dispatch_pending()
+    return result

@@ -120,7 +120,22 @@ def test_review_continue_on_fake(fake_and_match: dict) -> None:
     server_id = fake_and_match["server_id"]
     seq = fake_and_match["seq"]
 
-    req = client.post(f"/api/v1/matches/{match_id}/judge/review-request")
+    invite = client.post(
+        "/api/v1/invites",
+        json={"match_id": match_id, "role": "judge"},
+    )
+    assert invite.status_code == 200, invite.text
+    redeemed = client.post(
+        "/api/v1/invites/redeem",
+        json={"token": invite.json()["token"]},
+    )
+    assert redeemed.status_code == 200, redeemed.text
+    headers = {"Authorization": f"Bearer {redeemed.json()['access_token']}"}
+
+    req = client.post(
+        f"/api/v1/matches/{match_id}/judge/review-request",
+        headers=headers,
+    )
     assert req.status_code == 200
     assert req.json()["review_status"] == "requested"
     assert req.json()["status"] == "live"
@@ -157,6 +172,7 @@ def test_review_continue_on_fake(fake_and_match: dict) -> None:
 
     resolved = client.post(
         f"/api/v1/matches/{match_id}/judge/review-resolve",
+        headers=headers,
         json={"action": "continue", "version": version},
     )
     assert resolved.status_code == 200, resolved.text

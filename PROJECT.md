@@ -50,7 +50,7 @@ verify_command: TBD (scripts/verify.ps1)
 
 | Компонент | Где |
 |-----------|-----|
-| MySQL | Постоянный VPS организатора |
+| MySQL | **Рабочая:** удалённая managed MySQL (Timeweb / `*.twc1.net`), схема до `0006_demo_files`. Параметры только в `.env`. Локальный compose-MySQL — запасной. См. [infra/platform/README.md](infra/platform/README.md) |
 | Platform STK | Временный VPS на турнир |
 | CS2 server | Временный VPS на турнир |
 | OBS + CS2 + Director Agent | Ноутбук режиссёра |

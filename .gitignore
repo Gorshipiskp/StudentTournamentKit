@@ -73,3 +73,5 @@ tools/fake-cs2/*.jsonl
 # --- Cursor (local agent state; keep project rules) ---
 # .cursor/rules and .cursor/skills are tracked; ignore caches if any
 .cursor/*.log
+/cs2_dedicated_server/
+/certs/

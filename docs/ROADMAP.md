@@ -1,7 +1,7 @@
 # StudentTournamentKit — Roadmap
 
 > Вертикальные срезы · не MVP-заглушки.  
-> Обновлено: 2026-08-11.
+> Обновлено: 2026-08-12.
 
 ---
 
@@ -30,7 +30,7 @@
 - [x] CI / verify script skeleton (`scripts/verify.ps1`)
 - [x] FastAPI `/health` + `/ready`, Alembic foundation tables, outbox + correlation_id (TZ001 GATE)
 
-**Следующий:** Этап 2 — Production Slice (**TZ003**); этап 1 primary GATE closed (live VPS optional).
+**Следующий:** Этап 5 — Broadcast Slice; этапы 0–4 GATE closed (CS2 live / WebRTC live optional).
 
 ---
 
@@ -66,45 +66,66 @@
 
 ## Этап 2 — Production Slice
 
-**Фокус:** Overlay + dashboard + OBS + Director Agent.
+**Фокус:** Overlay + dashboard + OBS + Director Agent.  
+**ТЗ:** [tasks/003_PRODUCTION-SLICE.md](../tasks/003_PRODUCTION-SLICE.md) · ранбук M=7.  
+**Статус:** GATE **closed** (2026-08-12) на Fake OBS; live OBS optional.
 
-| Deliverable | Описание |
-|-------------|----------|
-| `apps/overlay/` | Svelte overlay, WebSocket, watermark |
-| `apps/dashboard/` | Scene control, match control, overlay override |
-| `apps/director-agent/` | OBS WebSocket, platform connection |
-| OBS templates | Per-tournament scene collection export |
+| Deliverable | Описание | Статус |
+|-------------|----------|--------|
+| `apps/overlay/` | Svelte overlay, WebSocket, watermark | done |
+| `apps/dashboard/` | Scene control, overlay override (`/director/`) | done |
+| `apps/director-agent/` | OBS WebSocket / `--fake-obs`, platform WS | done |
+| OBS templates | `apps/director-agent/templates/` + Stream Delay checklist | done |
+| `docs/OVERLAY-CONTRACT.md` | snapshot + production + Agent messages | done |
+| Owner smoke | `workers/developer/notes/TZ003-OWNER-SMOKE.md` | done |
+| `scripts/verify.ps1` | TZ003 steps (api + FE build + go test) | done |
 
-**Gate:** Режиссёр на одном ноутбуке ведёт тестовый матч с overlay и сценами из панели.
+**Gate:** Режиссёр на одном ноутбуке ведёт тестовый матч с overlay и сценами из панели (Fake OBS допустим) — **выполнено**.
+
+**Failure B** (Agent restart): reconciler A12 в `apps/director-agent` (+ pytest pointer в `test_failures_a_e.py`).
+
+**Следующий:** Этап 3 — People Slice (TZ004).
 
 ---
 
 ## Этап 3 — People Slice
 
-**Фокус:** Судья и комментаторы.
+**Фокус:** Судья и комментаторы.  
+**ТЗ:** [tasks/004_PEOPLE-SLICE.md](../tasks/004_PEOPLE-SLICE.md) · ранбук M=7.  
+**Статус:** **GATE closed** (S005, 2026-08-12). `live_webrtc=blocked`.
 
-| Deliverable | Описание |
-|-------------|----------|
-| `apps/judge/` | Mobile web, review workflow |
-| Commentator viewer | WebRTC + TURN + invite links |
-| Notifications | Tech pause → director + commentators + overlay |
+| Deliverable | Описание | GATE |
+|-------------|----------|------|
+| Invites | judge / commentator scoped tokens | done |
+| `apps/judge/` | Mobile web, review workflow | done |
+| Commentator `/watch` | WebRTC + TURN + invite | done (fake-webrtc) |
+| Agent publisher | `--fake-webrtc` primary; Virtual Cam optional | done (fake) |
+| Notifications | Tech pause → judge + watch + overlay | done |
 
-**Gate:** Полный workflow судьи на тестовом матче; 1–2 комментатора с live video в браузере.
+**Gate (primary):** Judge UI + `/watch` video (fake-webrtc) + tech-pause sync — **closed**.  
+**Gate (live WebRTC/OBS cam):** optional — `live_webrtc=blocked`.  
+Owner smoke: [TZ004-OWNER-SMOKE.md](../workers/developer/notes/TZ004-OWNER-SMOKE.md).
+
+**Следующий:** Этап 5 — Broadcast Slice (TZ006); этап 4 GATE closed.
 
 ---
 
 ## Этап 4 — Tournament Slice
 
-**Фокус:** Организаторский UI, сетка, multi-tournament.
+**Фокус:** Организаторский UI, сетка, multi-tournament.  
+**ТЗ:** [tasks/005_TOURNAMENT-SLICE.md](../tasks/005_TOURNAMENT-SLICE.md) · ранбук M=7.  
+**Статус:** **GATE closed** (2026-08-12; Fake match; `live_cs2`/`live_webrtc` = blocked).
 
 | Deliverable | Описание |
 |-------------|----------|
-| Tournament admin | Wizard, teams, manual bracket |
+| Tournament admin | Wizard, teams, manual single-elim bracket |
 | Multi-tournament | Parallel tournaments on one instance |
-| Branding | Logos/colors BLOB in MySQL |
-| Invite links | Director, judge, commentator |
+| Branding | Logos/colors BLOB in MySQL → overlay |
+| Invite links | Director, judge, commentator из admin UI |
 
-**Gate:** Нетехнический организатор создаёт турнир и проводит матч без правки конфигов.
+**Gate:** Нетехнический организатор создаёт турнир и проводит Fake-матч без правки конфигов. ✅
+
+**Следующий:** Этап 5 — Broadcast Slice (TZ006).
 
 ---
 
@@ -165,5 +186,5 @@
 
 ## Следующий шаг
 
-**Этап 2 / TZ003 Production Slice** — overlay + dashboard + Director Agent + OBS.  
-Live CS2 smoke (этап 1) — когда `@owner` даст VPS; иначе остаётся `live_smoke=blocked`.
+**TZ006 Broadcast Slice** — Team Lead открывает ТЗ/ранбук.  
+TZ005 Tournament GATE closed (`live_cs2`/`live_webrtc` = blocked).

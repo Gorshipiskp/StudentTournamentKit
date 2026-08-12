@@ -1,0 +1,62 @@
+{
+  "name": "STK Production (stub)",
+  "protocol": 1,
+  "description": "Minimal OBS scene list for StudentTournamentKit. Names must match Platform desired.scene.",
+  "scenes": [
+    {
+      "name": "waiting",
+      "sources": [
+        {
+          "type": "browser_source",
+          "name": "STK Overlay",
+          "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}",
+          "width": 1920,
+          "height": 1080,
+          "fps": 30,
+          "css": "body { background-color: rgba(0,0,0,0); margin: 0; overflow: hidden; }"
+        }
+      ]
+    },
+    {
+      "name": "intro",
+      "sources": [
+        { "type": "browser_source", "name": "STK Overlay", "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}", "width": 1920, "height": 1080 }
+      ]
+    },
+    {
+      "name": "teams",
+      "sources": [
+        { "type": "browser_source", "name": "STK Overlay", "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}", "width": 1920, "height": 1080 }
+      ]
+    },
+    {
+      "name": "ingame",
+      "sources": [
+        { "type": "game_capture_or_window", "name": "CS2 Spectator", "note": "Захват CS2 на том же ноутбуке" },
+        { "type": "browser_source", "name": "STK Overlay", "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}", "width": 1920, "height": 1080 }
+      ]
+    },
+    {
+      "name": "break",
+      "sources": [
+        { "type": "browser_source", "name": "STK Overlay", "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}", "width": 1920, "height": 1080 }
+      ]
+    },
+    {
+      "name": "winner",
+      "sources": [
+        { "type": "browser_source", "name": "STK Overlay", "url": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}", "width": 1920, "height": 1080 }
+      ]
+    }
+  ],
+  "browser_source_defaults": {
+    "shutdown_when_not_visible": false,
+    "refresh_browser_when_scene_becomes_active": true,
+    "control_audio_via_obs": false
+  },
+  "dev_urls": {
+    "overlay_vite": "http://127.0.0.1:5173/overlay/{{MATCH_ID}}",
+    "overlay_nginx": "http://127.0.0.1:8080/overlay/{{MATCH_ID}}",
+    "dashboard": "http://127.0.0.1:5174/director/{{MATCH_ID}}"
+  }
+}

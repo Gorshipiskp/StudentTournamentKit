@@ -10,7 +10,9 @@ from app.application.commands.finalize_demo import finalize_match_demo
 from app.application.commands.judge_review import (
     mark_review_paused_if_pending,
     maybe_arm_pause_on_round_start,
+    notify_review_status,
 )
+from app.application.commands.rebuild_overlay import rebuild_overlay_snapshot
 from app.application.unit_of_work import UnitOfWork
 from app.domain.match.apply import apply_game_event
 from app.domain.match.events import (
@@ -18,6 +20,7 @@ from app.domain.match.events import (
     MATCH_SCORE_UPDATED,
     MATCH_STATUS_CHANGED,
 )
+from app.domain.match.messages import JUDGE_REVIEW_TECH_PAUSE
 from app.domain.shared.outbox import OutboxMessage
 from app.infrastructure.adapters.cs2.command_client import GameCommandTransport
 
@@ -74,9 +77,10 @@ def ingest_cs2_event(
 
     armed_pause: dict[str, Any] | None = None
     out_demo: dict[str, Any] | None = None
+    review_pause_synced = False
     if result.applied:
         if event_type == "tech_pause_started":
-            mark_review_paused_if_pending(match)
+            review_pause_synced = mark_review_paused_if_pending(match)
         if event_type == "round_start":
             phase = payload.get("phase") if isinstance(payload.get("phase"), str) else None
             armed_pause = maybe_arm_pause_on_round_start(
@@ -105,6 +109,26 @@ def ingest_cs2_event(
         uow.matches.save(match)
     if result.applied:
         _enqueue_outbox(uow, match, result, correlation_id=correlation_id)
+        # armed_pause already notified via maybe_arm_pause_on_round_start
+        if review_pause_synced:
+            notify_review_status(uow, match, JUDGE_REVIEW_TECH_PAUSE)
+        elif armed_pause is None and _should_rebuild_overlay(result):
+            rebuild_overlay_snapshot(
+                uow,
+                match,
+                correlation_id=correlation_id,
+                notify=True,
+            )
+        elif armed_pause is None and (
+            event_type in {"tech_pause_started", "tech_pause_ended"}
+        ):
+            # Pause flag changed without match status transition — still refresh banner
+            rebuild_overlay_snapshot(
+                uow,
+                match,
+                correlation_id=correlation_id,
+                notify=True,
+            )
 
     out: dict[str, Any] = {
         "status": "ok" if result.applied else "rejected",
@@ -146,6 +170,12 @@ def _touch_server_heartbeat(
     if isinstance(pv, str):
         server.protocol_version = pv
     uow.game_servers.save(server)
+
+
+def _should_rebuild_overlay(result) -> bool:
+    """Bump overlay when score/status (or pause) visible on broadcast changes."""
+    interesting = {"score_updated", "status_changed"}
+    return bool(interesting.intersection(result.transitions))
 
 
 def _enqueue_outbox(uow: UnitOfWork, match, result, *, correlation_id: str | None) -> None:

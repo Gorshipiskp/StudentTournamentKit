@@ -6,6 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 from app.application.commands.issue_match_command import issue_match_command
+from app.application.commands.rebuild_overlay import rebuild_overlay_snapshot
 from app.application.unit_of_work import UnitOfWork
 from app.domain.match.entities import (
     MATCH_CANCELLED,
@@ -18,6 +19,12 @@ from app.domain.match.entities import (
     Match,
 )
 from app.domain.match.game_command import TYPE_FORFEIT, TYPE_PAUSE, TYPE_RESUME
+from app.domain.match.messages import (
+    JUDGE_REVIEW_CANCELLED,
+    JUDGE_REVIEW_REQUESTED,
+    JUDGE_REVIEW_RESOLVED,
+    JUDGE_REVIEW_TECH_PAUSE,
+)
 from app.domain.match.review import (
     RESOLUTION_CONTINUE,
     RESOLUTION_FORFEIT,
@@ -64,7 +71,7 @@ def request_review(uow: UnitOfWork, *, match_id: str) -> Match:
     match.review_resolution = None
     match.version += 1
     uow.matches.save(match)
-    _outbox_review(uow, match, "judge.review_requested")
+    _notify_review(uow, match, JUDGE_REVIEW_REQUESTED)
     uow.commit()
     return match
 
@@ -78,7 +85,7 @@ def cancel_review(uow: UnitOfWork, *, match_id: str) -> Match:
     match.review_status = REVIEW_CANCELLED
     match.version += 1
     uow.matches.save(match)
-    _outbox_review(uow, match, "judge.review_cancelled")
+    _notify_review(uow, match, JUDGE_REVIEW_CANCELLED)
     uow.commit()
     return match
 
@@ -122,7 +129,7 @@ def resolve_review(
         match.review_resolution = RESOLUTION_CONTINUE
         match.version += 1
         uow.matches.save(match)
-        _outbox_review(uow, match, "judge.review_resolved")
+        _notify_review(uow, match, JUDGE_REVIEW_RESOLVED)
         uow.commit()
     else:
         if losing_team not in {"team_a", "team_b"}:
@@ -142,7 +149,7 @@ def resolve_review(
         match.review_resolution = RESOLUTION_FORFEIT
         match.version += 1
         uow.matches.save(match)
-        _outbox_review(uow, match, "judge.review_resolved")
+        _notify_review(uow, match, JUDGE_REVIEW_RESOLVED)
         uow.commit()
 
     return {
@@ -187,6 +194,8 @@ def maybe_arm_pause_on_round_start(
         if match.status not in _TERMINAL_MATCH:
             match.status = MATCH_LIVE
         uow.matches.save(match)
+    # Notify judge + overlay (tech pause / pause_pending) — caller commits with ingest
+    _notify_review(uow, match, JUDGE_REVIEW_TECH_PAUSE)
     return cmd
 
 
@@ -207,7 +216,10 @@ def _require_match(uow: UnitOfWork, match_id: str) -> Match:
     return match
 
 
-def _outbox_review(uow: UnitOfWork, match: Match, event_type: str) -> None:
+def _notify_review(uow: UnitOfWork, match: Match, event_type: str) -> None:
+    """Rebuild overlay banner + outbox for judge hub (single path, no duplicated FSM)."""
+    rebuild_overlay_snapshot(uow, match, notify=True)
+    public = match.to_public_dict()
     uow.outbox.add(
         OutboxMessage(
             id=str(uuid4()),
@@ -220,6 +232,11 @@ def _outbox_review(uow: UnitOfWork, match: Match, event_type: str) -> None:
                 "review_resolution": match.review_resolution,
                 "match_status": match.status,
                 "version": match.version,
+                "match": public,
             },
         )
     )
+
+
+# Public alias for ingest / other commands
+notify_review_status = _notify_review

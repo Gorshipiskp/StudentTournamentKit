@@ -10,13 +10,24 @@ from fastapi import FastAPI
 from app.infrastructure.outbox.dispatcher import dispatch_pending
 from app.presentation.http.middleware.correlation import CorrelationIdMiddleware
 from app.presentation.http.routers import (
+    auth,
+    bracket,
+    branding,
     foundation,
     game_servers,
     health,
     internal_cs2,
+    invites,
     matches,
     ready,
+    teams,
+    tournaments,
+    turn,
 )
+from app.presentation.ws import agent as agent_ws
+from app.presentation.ws import judge as judge_ws
+from app.presentation.ws import overlay as overlay_ws
+from app.presentation.ws import signaling as signaling_ws
 
 logging.basicConfig(level=logging.INFO)
 
@@ -38,6 +49,17 @@ app.add_middleware(CorrelationIdMiddleware)
 app.include_router(health.router)
 app.include_router(ready.router)
 app.include_router(foundation.router)
+app.include_router(auth.router)
+app.include_router(tournaments.router)
+app.include_router(teams.router)
+app.include_router(bracket.router)
+app.include_router(branding.router)
 app.include_router(matches.router)
+app.include_router(invites.router)
+app.include_router(turn.router)
 app.include_router(game_servers.router)
 app.include_router(internal_cs2.router)
+app.include_router(overlay_ws.router)
+app.include_router(agent_ws.router)
+app.include_router(signaling_ws.router)
+app.include_router(judge_ws.router)

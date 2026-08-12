@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |------|----------|
-| **Статус** | approved |
+| **Статус** | done (primary GATE 2026-08-11; live_smoke=blocked) |
 | **Owner** | @team-lead / @owner |
 | **Исполнитель** | developer (+ devops на deploy-cs2) |
 | **Этап roadmap** | 1 — Game Slice |

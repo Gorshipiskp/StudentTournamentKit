@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
-from sqlalchemy.dialects.mysql import JSON
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, func
+from sqlalchemy.dialects.mysql import JSON, MEDIUMBLOB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.persistence.base import Base
@@ -16,6 +16,9 @@ class Tournament(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
+    name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    format: Mapped[str] = mapped_column(String(32), nullable=False, default="single_elim")
+    settings_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -166,6 +169,70 @@ class DemoFile(Base):
     )
 
 
+class OverlayState(Base):
+    __tablename__ = "overlay_states"
+
+    match_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("matches.id"),
+        primary_key=True,
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    scene: Mapped[str] = mapped_column(String(32), nullable=False, default="waiting")
+    data_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    manual_overrides: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class ProductionSession(Base):
+    __tablename__ = "production_sessions"
+
+    match_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("matches.id"),
+        primary_key=True,
+    )
+    desired_scene: Mapped[str] = mapped_column(String(32), nullable=False, default="waiting")
+    actual_scene: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    desired_stream: Mapped[str] = mapped_column(String(16), nullable=False, default="off")
+    actual_stream: Mapped[str] = mapped_column(String(16), nullable=False, default="unknown")
+    agent_status: Mapped[str] = mapped_column(String(32), nullable=False, default="disconnected")
+    obs_status: Mapped[str] = mapped_column(String(32), nullable=False, default="disconnected")
+    broadcast_status: Mapped[str] = mapped_column(String(32), nullable=False, default="unknown")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class InviteToken(Base):
+    __tablename__ = "invite_tokens"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    match_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("matches.id"),
+        nullable=False,
+        index=True,
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 class EventOutbox(Base):
     __tablename__ = "event_outbox"
 
@@ -181,3 +248,117 @@ class EventOutbox(Base):
         nullable=False,
     )
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Team(Base):
+    __tablename__ = "teams"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tournament_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(64), nullable=False)
+    tag: Mapped[str] = mapped_column(String(16), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class Player(Base):
+    __tablename__ = "players"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    team_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("teams.id"),
+        nullable=False,
+        index=True,
+    )
+    nickname: Mapped[str] = mapped_column(String(64), nullable=False)
+    steam_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    is_coach: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class TournamentBranding(Base):
+    __tablename__ = "tournament_branding"
+
+    tournament_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("tournaments.id"),
+        primary_key=True,
+    )
+    logo_blob: Mapped[bytes | None] = mapped_column(
+        LargeBinary().with_variant(MEDIUMBLOB(), "mysql"),
+        nullable=True,
+    )
+    logo_content_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    bg_blob: Mapped[bytes | None] = mapped_column(
+        LargeBinary().with_variant(MEDIUMBLOB(), "mysql"),
+        nullable=True,
+    )
+    bg_content_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    colors_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class BracketNode(Base):
+    __tablename__ = "bracket_nodes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tournament_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    round: Mapped[int] = mapped_column(Integer, nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    team_a_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("teams.id"), nullable=True
+    )
+    team_b_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("teams.id"), nullable=True
+    )
+    source_a_node_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_b_node_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    match_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("matches.id"), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )

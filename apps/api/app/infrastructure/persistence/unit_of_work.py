@@ -8,12 +8,19 @@ from typing import Self
 from sqlalchemy.orm import Session
 
 from app.infrastructure.persistence.repositories import (
+    SqlAlchemyBracketNodeRepository,
+    SqlAlchemyBrandingRepository,
     SqlAlchemyDemoFileRepository,
     SqlAlchemyGameCommandRepository,
     SqlAlchemyGameEventRepository,
     SqlAlchemyGameServerRepository,
+    SqlAlchemyInviteTokenRepository,
     SqlAlchemyMatchRepository,
     SqlAlchemyOutboxRepository,
+    SqlAlchemyOverlayStateRepository,
+    SqlAlchemyPlayerRepository,
+    SqlAlchemyProductionSessionRepository,
+    SqlAlchemyTeamRepository,
     SqlAlchemyTournamentRepository,
 )
 from app.infrastructure.persistence.session import get_session_factory
@@ -24,11 +31,18 @@ class SqlAlchemyUnitOfWork:
         self._owned_session = session is None
         self.session = session or get_session_factory()()
         self.tournaments = SqlAlchemyTournamentRepository(self.session)
+        self.teams = SqlAlchemyTeamRepository(self.session)
+        self.players = SqlAlchemyPlayerRepository(self.session)
+        self.bracket_nodes = SqlAlchemyBracketNodeRepository(self.session)
+        self.branding = SqlAlchemyBrandingRepository(self.session)
         self.matches = SqlAlchemyMatchRepository(self.session)
         self.game_events = SqlAlchemyGameEventRepository(self.session)
         self.game_commands = SqlAlchemyGameCommandRepository(self.session)
         self.game_servers = SqlAlchemyGameServerRepository(self.session)
         self.demos = SqlAlchemyDemoFileRepository(self.session)
+        self.overlays = SqlAlchemyOverlayStateRepository(self.session)
+        self.production = SqlAlchemyProductionSessionRepository(self.session)
+        self.invites = SqlAlchemyInviteTokenRepository(self.session)
         self.outbox = SqlAlchemyOutboxRepository(self.session)
 
     def __enter__(self) -> Self:

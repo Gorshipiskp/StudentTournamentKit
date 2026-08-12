@@ -327,6 +327,7 @@ Director laptop (GOTV)
 
 - Platform VPS → MySQL VPS по TLS (`require_secure_transport=ON`).
 - Pool: SQLAlchemy `pool_size=10`, `max_overflow=20`.
+- **Owner (2026-08-11):** рабочая БД — удалённая managed MySQL (Timeweb Cloud, хост `*.twc1.net`). Подключение через корневой `.env` (`MYSQL_*`). Миграции Alembic до head `0006_demo_files` применены. Локальный MySQL в Compose — опционально (офлайн/CI). Детали: [infra/platform/README.md](../infra/platform/README.md).
 
 ---
 

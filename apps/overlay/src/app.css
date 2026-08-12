@@ -1,0 +1,30 @@
+:root {
+  color-scheme: dark;
+  --ink: #f2f4f7;
+  --muted: rgba(242, 244, 247, 0.72);
+  --accent: #7dd3c0;
+  --danger: #f07178;
+  --panel: rgba(8, 12, 18, 0.55);
+  --font: "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font);
+  color: var(--ink);
+}
+
+body {
+  /* OBS Browser Source: transparent canvas */
+  background: transparent;
+}
